@@ -67,6 +67,7 @@ function saveSettingsNow() {
   meta.params.high = typeof params.high === 'number' ? params.high : null;
   meta.params.nsEnabled = !!params.nsEnabled;
   meta.params.nsStrength = params.nsStrength;
+  meta.params.pitchQuality = params.pitchQuality === 1 ? 1 : 0;
   localStorage.setItem('vt_settings', JSON.stringify(meta));
 }
 
@@ -93,6 +94,9 @@ function loadSettings() {
     if (typeof saved.params.nsEnabled === 'boolean') params.nsEnabled = saved.params.nsEnabled;
     if (typeof saved.params.nsStrength === 'number' && isFinite(saved.params.nsStrength)) {
       params.nsStrength = Math.min(100, Math.max(0, saved.params.nsStrength));
+    }
+    if (saved.params.pitchQuality === 0 || saved.params.pitchQuality === 1) {
+      params.pitchQuality = saved.params.pitchQuality;
     }
   }
   if (typeof saved.chunkMs === 'number') rvc.chunkMs = saved.chunkMs;
@@ -325,6 +329,7 @@ function resetAllSettings() {
   params.high = null;
   params.nsEnabled = true;
   params.nsStrength = 60;
+  params.pitchQuality = 0;
 
   renderSliders('voiceSliders', 'voice');
   renderSliders('fxSliders', 'fx');
@@ -332,6 +337,7 @@ function resetAllSettings() {
   $('nsEnable').checked = true;
   $('s_nsStrength').value = '60';
   $('v_nsStrength').textContent = '60 %';
+  $('qualityChk').checked = false;
 
   state.customIr = null;
   rebuildConvolver();

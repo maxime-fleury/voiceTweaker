@@ -65,6 +65,9 @@ params.high = null;
 params.nsEnabled = true;
 params.nsStrength = 60;
 
+// Pitch algorithm: 0 = granular (low latency), 1 = phase-locked vocoder.
+params.pitchQuality = 0;
+
 const DEFAULT_PARAMS = Object.assign({}, params);
 
 const SLIDER_IDS = SLIDERS.filter((s) => s.type !== 'select').map((s) => s.id);

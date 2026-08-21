@@ -34,7 +34,7 @@ module.exports = `(async () => {
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
       'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect',
       'resetBtn','appVersion','ghBtn','sponsorBtn','wizard','wizMic','wizNext','wizBack',
-      'wizSkip','wizCable','wizVoices'];
+      'wizSkip','wizCable','wizVoices','qualityChk'];
 
   // neutralise l'auto-affichage du wizard (premier lancement) pour la suite
   closeWizard();
@@ -286,6 +286,54 @@ module.exports = `(async () => {
     assert(rOff > 0.05, 'bypass rms=' + rOff.toFixed(4));
     assert(rOn < rOff * 0.7, 'attenuation insuffisante on=' + rOn.toFixed(4) + ' off=' + rOff.toFixed(4));
     return 'off=' + rOff.toFixed(3) + ' on=' + rOn.toFixed(3);
+  });
+
+  await test('vocoder: pitch +7 juste et distinct du granulaire', async () => {
+    async function render(quality) {
+      const c = new OfflineAudioContext(1, 48000, 48000);
+      await c.audioWorklet.addModule(new URL('./worklets/pitchvocoder-worklet.js', location.href));
+      await c.audioWorklet.addModule(new URL('./worklets/voice-worklet.js', location.href));
+      const voc = new AudioWorkletNode(c, 'pitch-vocoder', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { enabled: quality === 1, pitch: 7, vibrDepth: 0, vibrRate: 5, humanize: 0 },
+      });
+      const node = new AudioWorkletNode(c, 'voice-processor', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { pitch: 7, grain: 85, gateDb: -100, ring: 0, ringFreq: 50,
+          vibrDepth: 0, vibrRate: 5, humanize: 0, breath: 0, transients: 55,
+          bypassPitch: quality === 1 ? 1 : 0 },
+      });
+      const osc = c.createOscillator();
+      osc.frequency.value = 220;
+      osc.connect(voc);
+      voc.connect(node);
+      node.connect(c.destination);
+      osc.start();
+      return c.startRendering();
+    }
+    function domFreq(b) {
+      const ch = b.getChannelData(0);
+      let start = 9600, end = ch.length - 4800;
+      let crossings = 0;
+      for (let i = start + 1; i < end; i++) {
+        if ((ch[i - 1] < 0) !== (ch[i] < 0)) crossings++;
+      }
+      return (crossings / 2) * (48000 / (end - start));
+    }
+    const gran = await render(0);
+    const qual = await render(1);
+    const expected = 220 * Math.pow(2, 7 / 12);
+    const fGran = domFreq(gran);
+    const fQual = domFreq(qual);
+    assert(Math.abs(fQual - expected) < expected * 0.08,
+      'freq vocoder=' + fQual.toFixed(1) + ' attendu~' + expected.toFixed(1));
+    assert(Math.abs(fGran - expected) < expected * 0.12,
+      'freq granulaire=' + fGran.toFixed(1));
+    const da = gran.getChannelData(0), db = qual.getChannelData(0);
+    let diff = 0;
+    for (let i = 9600; i < da.length; i++) diff = Math.max(diff, Math.abs(da[i] - db[i]));
+    assert(diff > 0.05, 'algorithmes identiques diff=' + diff.toFixed(4));
+    return 'gran=' + fGran.toFixed(0) + 'Hz voc=' + fQual.toFixed(0) + 'Hz';
   });
 
   await test('presets: sequence rapide sans erreur', () => {

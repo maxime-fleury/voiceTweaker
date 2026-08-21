@@ -33,6 +33,20 @@ function buildGraph() {
   nsDry.gain.value = params.nsEnabled ? 1 - params.nsStrength / 100 : 1;
   const nsSum = ctx.createGain();
 
+  // Vocoder « Qualité max » : toujours en chaîne, bypass interne si off.
+  const voc = new AudioWorkletNode(ctx, 'pitch-vocoder', {
+    numberOfInputs: 1,
+    numberOfOutputs: 1,
+    outputChannelCount: [1],
+    processorOptions: {
+      enabled: params.pitchQuality === 1,
+      pitch: params.pitch,
+      vibrDepth: params.vibrDepth,
+      vibrRate: params.vibrRate,
+      humanize: params.humanize,
+    },
+  });
+
   const worklet = new AudioWorkletNode(ctx, 'voice-processor', {
     numberOfInputs: 1,
     numberOfOutputs: 1,
@@ -48,6 +62,7 @@ function buildGraph() {
       humanize: params.humanize,
       breath: params.breath,
       transients: params.transients,
+      bypassPitch: params.pitchQuality === 1 ? 1 : 0,
     },
   });
   worklet.port.onmessage = (e) => {
@@ -148,7 +163,8 @@ function buildGraph() {
   nsWet.connect(nsSum);
   source.connect(nsDry);
   nsDry.connect(nsSum);
-  nsSum.connect(worklet);
+  nsSum.connect(voc);
+  voc.connect(worklet);
   worklet.connect(formant);
   formant.connect(deesser);
   deesser.connect(peak);
@@ -178,6 +194,7 @@ function buildGraph() {
 
   state.worklet = worklet;
   state.formant = formant;
+  state.voc = voc;
   state.deesser = deesser;
   state.ns = ns;
   state.nsWet = nsWet;
@@ -226,15 +243,14 @@ function applyParams() {
   if (state.deesser) {
     state.deesser.port.postMessage({ amount: params.deesser });
   }
-  if (state.nsWet) {
-    const on = !!params.nsEnabled;
-    const s = params.nsStrength / 100;
-    const t = state.ctx ? state.ctx.currentTime : 0;
-    for (const [g, target] of [[state.nsWet, on ? s : 0], [state.nsDry, on ? 1 - s : 1]]) {
-      g.gain.cancelScheduledValues(t);
-      g.gain.setValueAtTime(g.gain.value, t);
-      g.gain.linearRampToValueAtTime(target, t + 0.05);
-    }
+  if (state.voc) {
+    state.voc.port.postMessage({
+      enabled: params.pitchQuality === 1,
+      pitch: params.pitch,
+      vibrDepth: params.vibrDepth,
+      vibrRate: params.vibrRate,
+      humanize: params.humanize,
+    });
   }
   if (state.worklet) {
     state.worklet.port.postMessage({
@@ -248,7 +264,18 @@ function applyParams() {
       humanize: params.humanize,
       breath: params.breath,
       transients: params.transients,
+      bypassPitch: params.pitchQuality === 1 ? 1 : 0,
     });
+  }
+  if (state.nsWet) {
+    const on = !!params.nsEnabled;
+    const s = params.nsStrength / 100;
+    const t = state.ctx ? state.ctx.currentTime : 0;
+    for (const [g, target] of [[state.nsWet, on ? s : 0], [state.nsDry, on ? 1 - s : 1]]) {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(target, t + 0.05);
+    }
   }
   if (state.formant) {
     const alpha = Math.pow(2, (params.formant * 4) / 1200);
@@ -278,6 +305,7 @@ function updateLatency() {
   if (!el) return;
   if (state.running && state.ctx) {
     let ms = (state.ctx.baseLatency + params.grain / 1000) * 1000;
+    if (params.pitchQuality === 1) ms += 55;
     if (rvc.enabled && rvc.loaded) ms += rvc.chunkMs;
     el.textContent = '~' + Math.round(ms) + ' ms';
   } else {

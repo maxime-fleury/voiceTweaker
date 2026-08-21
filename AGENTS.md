@@ -20,7 +20,7 @@ Depuis un clone frais, un agent IA peut tout faire avec ces commandes :
 ```bash
 bun install                          # dépendances (postinstall gérés via trustedDependencies)
 node node_modules/electron/install.js  # s'assure que le binaire Electron existe (idempotent)
-bun run test:e2e                     # suite E2E complète : doit afficher SUMMARY 20/20
+bun run test:e2e                     # suite E2E complète : doit afficher SUMMARY 21/21
 bun run smoke                        # vérifie worklets + rendu formant + RVC : SMOKE_OK
 bun start                            # lance l'app
 ```
@@ -33,7 +33,7 @@ passer : cherche la régression dans le code (voir « Règles d'or »).
 | Commande | Rôle |
 |---|---|
 | `bun start` | Lance l'app en dev |
-| `bun run test:e2e` | E2E headless (micro factice) — 20 tests, exit code fiable |
+| `bun run test:e2e` | E2E headless (micro factice) — 21 tests, exit code fiable |
 | `bun run smoke` | Smoke rapide : chargement des worklets, rendu offline, statut RVC |
 | `bun run icon` | Régénère `renderer/favicon.ico` + `renderer/icon.png` (zéro dépendance) |
 | `bun run dist:dir` | Build packagé non installable → `release/win-unpacked/` |
@@ -79,7 +79,8 @@ création du nœud ; `port.postMessage` sert uniquement aux mises à jour live.
 Ne compte jamais sur un message post-création pour l'état initial (course
 contre `startRendering()` — bug déjà corrigé une fois).
 
-- `voice-processor` : `{pitch, grain, gateDb, ring(0..1), ringFreq, vibrDepth, vibrRate, humanize, breath, transients}` + messages sortants `{type:'meter', rms}`
+- `voice-processor` : `{pitch, grain, gateDb, ring(0..1), ringFreq, vibrDepth, vibrRate, humanize, breath, transients, bypassPitch(0|1)}` + messages sortants `{type:'meter', rms}`
+- `pitch-vocoder` : `{enabled(0|1), pitch, vibrDepth, vibrRate, humanize}` — mode « Qualité max » ; quand actif, voice-processor reçoit `bypassPitch:1`
 - `formant-processor` : `{alpha}` (alpha = 2^(formant*4/1200))
 - `stream-tap` → chunks Float32Array vers RVC ; `chunk-player` accepte `{audio: Float32Array}` (transférable)
 

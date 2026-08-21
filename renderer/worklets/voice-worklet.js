@@ -47,6 +47,7 @@ class VoiceProcessor extends AudioWorkletProcessor {
       humanize: 0,
       breath: 0,
       transients: 0,
+      bypassPitch: 0,
     };
     const po = options && options.processorOptions;
     if (po) {
@@ -84,8 +85,10 @@ class VoiceProcessor extends AudioWorkletProcessor {
     const semis = this.p.pitch;
     const vibrCents = this.p.vibrDepth * 0.6;
     const driftCents = this.p.humanize * 0.25;
+    // bypassPitch=1 : le vocoder « Qualité max » fait le pitch en amont
     const bypass =
-      Math.abs(semis) < 0.005 && vibrCents === 0 && driftCents === 0;
+      this.p.bypassPitch ||
+      (Math.abs(semis) < 0.005 && vibrCents === 0 && driftCents === 0);
     const baseRatio = Math.pow(2, semis / 12);
     const G = Math.max(256, Math.round((sr * this.p.grain) / 1000));
 

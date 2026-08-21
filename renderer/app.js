@@ -29,6 +29,7 @@ async function start() {
       new URL('./vendor/ns/rnnoise-worklet.js', location.href)
     );
     await state.ctx.audioWorklet.addModule(new URL('./worklets/voice-worklet.js', location.href));
+    await state.ctx.audioWorklet.addModule(new URL('./worklets/pitchvocoder-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/formant-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/deesser-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/stream-tap-worklet.js', location.href));
@@ -83,6 +84,7 @@ function stop() {
   }
   state.worklet = null;
   state.formant = null;
+  state.voc = null;
   state.deesser = null;
   state.ns = null;
   state.nsWet = null;
@@ -124,6 +126,14 @@ function init() {
     params.nsStrength = parseFloat($('s_nsStrength').value);
     $('v_nsStrength').textContent = Math.round(params.nsStrength) + ' %';
     applyParams();
+    saveSettingsDebounced();
+  });
+
+  $('qualityChk').checked = params.pitchQuality === 1;
+  $('qualityChk').addEventListener('change', (e) => {
+    params.pitchQuality = e.target.checked ? 1 : 0;
+    applyParams();
+    updateLatency();
     saveSettingsDebounced();
   });
 
