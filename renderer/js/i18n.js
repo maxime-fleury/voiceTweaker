@@ -84,6 +84,8 @@ const I18N_DICT = {
     'tip.echoTime': "Durée entre chaque répétition de l'écho.",
     'slider.chorus': 'Chorus',
     'tip.chorus': 'Épaissit la voix par léger délai modulé.',
+    'slider.deesser': 'Dé-esser',
+    'tip.deesser': 'Adoucit les sibilants (s, ch) durcis par les shifts.',
     'slider.volume': 'Volume',
     'tip.volume': 'Volume général de la sortie.',
 
@@ -238,6 +240,8 @@ const I18N_DICT = {
     'tip.echoTime': 'Time between each echo repetition.',
     'slider.chorus': 'Chorus',
     'tip.chorus': 'Thickens the voice with slight modulated delay.',
+    'slider.deesser': 'De-esser',
+    'tip.deesser': "Softens sibilants (s, ch) hardened by the shifts.",
     'slider.volume': 'Volume',
     'tip.volume': 'Overall output volume.',
 

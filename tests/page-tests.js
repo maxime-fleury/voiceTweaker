@@ -41,7 +41,7 @@ module.exports = `(async () => {
     const voice = document.querySelectorAll('#voiceSliders input[type="range"]').length;
     const fx = document.querySelectorAll('#fxSliders input[type="range"]').length;
     assert(voice === 10, 'voice sliders=' + voice);
-    assert(fx === 8, 'fx sliders=' + fx);
+    assert(fx === 9, 'fx sliders=' + fx);
     const sel = $('irType');
     assert(sel && sel.tagName === 'SELECT' && sel.options.length === 4, 'irType select invalide');
     return 'voice=' + voice + ' fx=' + fx;
@@ -183,8 +183,40 @@ module.exports = `(async () => {
     return 'diff=' + diff.toFixed(3);
   });
 
-  await test('worklet: formant alpha 1.12 rendu connu', async () => {
-    const c = new OfflineAudioContext(1, 8192, 48000);
+  await test('deesser: attenue une sibilante 8 kHz', async () => {
+    async function render(amount) {
+      const c = new OfflineAudioContext(1, 24000, 48000);
+      await c.audioWorklet.addModule(new URL('./worklets/deesser-worklet.js', location.href));
+      const node = new AudioWorkletNode(c, 'deesser-processor', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { amount: amount },
+      });
+      const osc = c.createOscillator();
+      osc.frequency.value = 8000;
+      const g = c.createGain();
+      g.gain.value = 0.4;
+      osc.connect(g);
+      g.connect(node);
+      node.connect(c.destination);
+      osc.start();
+      return c.startRendering();
+    }
+    const offBuf = await render(0);
+    const onBuf = await render(100);
+    function rms(b) {
+      let a = 0;
+      const ch = b.getChannelData(0);
+      for (let i = 4800; i < ch.length; i++) a += ch[i] * ch[i];
+      return Math.sqrt(a / (ch.length - 4800));
+    }
+    const rOff = rms(offBuf);
+    const rOn = rms(onBuf);
+    assert(rOff > 0.2, 'off rms=' + rOff.toFixed(3));
+    assert(rOn < rOff * 0.85, 'attenuation insuffisante on=' + rOn.toFixed(3) + ' off=' + rOff.toFixed(3));
+    return 'off=' + rOff.toFixed(3) + ' on=' + rOn.toFixed(3);
+  });
+
+  await test('worklet: formant alpha 1.12 rendu connu', async () => {    const c = new OfflineAudioContext(1, 8192, 48000);
     await c.audioWorklet.addModule(new URL('./worklets/formant-worklet.js', location.href));
     const fp = new AudioWorkletNode(c, 'formant-processor', {
       processorOptions: { alpha: 1.12 },

@@ -141,7 +141,7 @@ app.whenReady().then(() => {
           (async () => {
             const out = [];
             const ctx = new OfflineAudioContext(1, 8192, 48000);
-            for (const f of ['voice-worklet.js','formant-worklet.js','stream-tap-worklet.js','player-worklet.js']) {
+            for (const f of ['voice-worklet.js','formant-worklet.js','stream-tap-worklet.js','player-worklet.js','deesser-worklet.js']) {
               await ctx.audioWorklet.addModule(new URL('./worklets/' + f, location.href));
               out.push(f + ':loaded');
             }

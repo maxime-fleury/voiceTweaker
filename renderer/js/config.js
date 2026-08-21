@@ -48,6 +48,8 @@ const SLIDERS = [
     fmt: (v) => Math.round(v) + ' ms', tip: () => t('tip.echoTime') },
   { id: 'chorus', group: 'fx', label: () => t('slider.chorus'), min: 0, max: 100, step: 1, value: 0,
     fmt: pctFmt, tip: () => t('tip.chorus') },
+  { id: 'deesser', group: 'fx', label: () => t('slider.deesser'), min: 0, max: 100, step: 1, value: 30,
+    fmt: pctFmt, tip: () => t('tip.deesser') },
   { id: 'volume', group: 'fx', label: () => t('slider.volume'), min: 0, max: 150, step: 1, value: 100,
     fmt: pctFmt, tip: () => t('tip.volume') },
 ];

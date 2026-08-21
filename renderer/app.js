@@ -30,6 +30,7 @@ async function start() {
     );
     await state.ctx.audioWorklet.addModule(new URL('./worklets/voice-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/formant-worklet.js', location.href));
+    await state.ctx.audioWorklet.addModule(new URL('./worklets/deesser-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/stream-tap-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/player-worklet.js', location.href));
 
@@ -82,6 +83,7 @@ function stop() {
   }
   state.worklet = null;
   state.formant = null;
+  state.deesser = null;
   state.ns = null;
   state.nsWet = null;
   state.nsDry = null;

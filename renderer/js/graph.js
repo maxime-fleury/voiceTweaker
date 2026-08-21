@@ -61,6 +61,13 @@ function buildGraph() {
     processorOptions: { alpha: Math.pow(2, (params.formant * 4) / 1200) },
   });
 
+  const deesser = new AudioWorkletNode(ctx, 'deesser-processor', {
+    numberOfInputs: 1,
+    numberOfOutputs: 1,
+    outputChannelCount: [1],
+    processorOptions: { amount: params.deesser },
+  });
+
   const tap = new AudioWorkletNode(ctx, 'stream-tap', {
     numberOfInputs: 1,
     numberOfOutputs: 0,
@@ -126,6 +133,14 @@ function buildGraph() {
   const monitorGain = ctx.createGain();
   monitorGain.gain.value = $('monitorChk').checked ? 1 : 0;
 
+  // limiteur final : protège de tout clip quand drive/réverbe/volume s'additionnent
+  const limiter = ctx.createDynamicsCompressor();
+  limiter.threshold.value = -2;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.002;
+  limiter.release.value = 0.12;
+
   const msDest = ctx.createMediaStreamDestination();
 
   source.connect(ns);
@@ -135,7 +150,8 @@ function buildGraph() {
   nsDry.connect(nsSum);
   nsSum.connect(worklet);
   worklet.connect(formant);
-  formant.connect(peak);
+  formant.connect(deesser);
+  deesser.connect(peak);
   peak.connect(low);
   low.connect(high);
   high.connect(shaper);
@@ -154,35 +170,37 @@ function buildGraph() {
   chorusDelay.connect(chorusWet);
   chorusWet.connect(master);
 
-  master.connect(monitorGain);
+  master.connect(limiter);
+  limiter.connect(monitorGain);
   monitorGain.connect(ctx.destination);
 
-  master.connect(msDest);
+  limiter.connect(msDest);
 
   state.worklet = worklet;
   state.formant = formant;
+  state.deesser = deesser;
   state.ns = ns;
   state.nsWet = nsWet;
   state.nsDry = nsDry;
   state.tap = tap;
   state.player = player;
   state.msDest = msDest;
-  state.nodes = { peak, low, high, shaper, wet, master, monitorGain, echoDelay, echoWet, chorusWet, conv };
+  state.nodes = { peak, low, high, shaper, wet, master, monitorGain, echoDelay, echoWet, chorusWet, conv, limiter };
   connectOutput();
 }
 
 function connectOutput() {
-  const { master, player, monitorGain } = state;
-  if (!master) return;
-  try { master.disconnect(); } catch (e) {}
+  const { limiter, player, monitorGain } = state;
+  if (!limiter) return;
+  try { limiter.disconnect(); } catch (e) {}
   try { player.disconnect(); } catch (e) {}
   if (rvc.enabled && rvc.loaded) {
-    master.connect(state.tap);
+    limiter.connect(state.tap);
     player.connect(monitorGain);
     player.connect(state.msDest);
   } else {
-    master.connect(monitorGain);
-    master.connect(state.msDest);
+    limiter.connect(monitorGain);
+    limiter.connect(state.msDest);
   }
 }
 
@@ -205,6 +223,9 @@ async function sendRvcChunk(chunk) {
 }
 
 function applyParams() {
+  if (state.deesser) {
+    state.deesser.port.postMessage({ amount: params.deesser });
+  }
   if (state.nsWet) {
     const on = !!params.nsEnabled;
     const s = params.nsStrength / 100;
