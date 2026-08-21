@@ -198,7 +198,7 @@ module.exports = `(async () => {
     const buf = await c.startRendering();
     let peak = 0;
     for (const v of buf.getChannelData(0)) peak = Math.max(peak, Math.abs(v));
-    assert(Math.abs(peak - 0.845) < 0.06, 'peak=' + peak.toFixed(3));
+    assert(Math.abs(peak - 0.86) < 0.05, 'peak=' + peak.toFixed(3));
     return 'peak=' + peak.toFixed(3);
   });
 

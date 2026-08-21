@@ -84,6 +84,7 @@ class FormantProcessor extends AudioWorkletProcessor {
     this.cepRe = new Float32Array(N);
     this.cepIm = new Float32Array(N);
     this.envLog = new Float32Array(N);
+    this.gainLog = new Float32Array(N / 2 + 1);
 
     this.alpha = 1;
     const po = options && options.processorOptions;
@@ -121,7 +122,7 @@ class FormantProcessor extends AudioWorkletProcessor {
     for (let k = 0; k < N; k++) envLog[k] = cepRe[k];
 
     const alpha = this.alpha;
-    let logMean = 0;
+    const gainLog = this.gainLog;
     for (let k = 0; k <= N / 2; k++) {
       const src = k / alpha;
       const i0 = Math.floor(src);
@@ -129,16 +130,25 @@ class FormantProcessor extends AudioWorkletProcessor {
       const a = envLog[Math.min(i0, N / 2)];
       const b = envLog[Math.min(i0 + 1, N / 2)];
       const shifted = a + (b - a) * frac;
-      const g = Math.exp(shifted - envLog[k]);
-      const gainN = g;
-      const gainMirrored = g;
-      re[k] *= gainN;
-      im[k] *= gainN;
-      if (k > 0 && k < N / 2) {
-        re[N - k] *= gainMirrored;
-        im[N - k] *= gainMirrored;
+      gainLog[k] = shifted - envLog[k];
+    }
+    // lissage de la courbe de gain (7 bins) : réduit les artefacts métalliques
+    const W = 3;
+    let logMean = 0;
+    for (let k = 0; k <= N / 2; k++) {
+      let s = 0, c = 0;
+      for (let j = k - W; j <= k + W; j++) {
+        if (j >= 0 && j <= N / 2) { s += gainLog[j]; c++; }
       }
-      logMean += Math.log(gainN + 1e-20);
+      const lg = s / c;
+      const g = Math.exp(lg);
+      re[k] *= g;
+      im[k] *= g;
+      if (k > 0 && k < N / 2) {
+        re[N - k] *= g;
+        im[N - k] *= g;
+      }
+      logMean += lg;
     }
     logMean /= N / 2 + 1;
     const norm = Math.exp(-logMean);
