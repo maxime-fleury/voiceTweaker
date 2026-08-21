@@ -212,6 +212,7 @@ function renderPresets() {
   ALL_PRESETS = Object.assign({}, PRESETS, getCustomPresets());
   const wrap = $('presets');
   if (!wrap) return;
+  const activeKey = wrap.querySelector('.chip.active')?.dataset.key || null;
   wrap.innerHTML = '';
 
   const customs = getCustomPresets();
@@ -251,6 +252,11 @@ function renderPresets() {
       chips.appendChild(chip);
     }
     wrap.appendChild(chips);
+  }
+
+  if (activeKey) {
+    const chip = wrap.querySelector('.chip[data-key="' + activeKey + '"]');
+    if (chip) chip.classList.add('active');
   }
 }
 

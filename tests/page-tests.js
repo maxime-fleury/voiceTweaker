@@ -78,6 +78,7 @@ module.exports = `(async () => {
   });
 
   await test('preset personnalise: sauver puis supprimer', () => {
+    clickChip('feminin');
     clickRange('s_pitch', -5);
     assert(params.pitch === -5, 'pitch=' + params.pitch);
     $('customName').value = 'E2E Voice';
@@ -90,9 +91,13 @@ module.exports = `(async () => {
     assert(customs[k].p.pitch === -5, 'p.pitch=' + customs[k].p.pitch);
     const chip = document.querySelector('.chip[data-key="' + k + '"]');
     assert(chip, 'chip custom absent');
+    assert(document.querySelector('.chip[data-key="feminin"]').classList.contains('active'),
+      'highlight perdu apres rebuild');
     chip.querySelector('.del').click();
     const after = JSON.parse(localStorage.getItem('vt_custom_presets') || '{}');
     assert(Object.keys(after).length === 0, 'suppression echouee');
+    assert(document.querySelector('.chip[data-key="feminin"]').classList.contains('active'),
+      'highlight perdu apres suppression');
     clickChip('naturel');
     return 'ok';
   });
