@@ -1,5 +1,6 @@
 const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { RvcEngine } = require('./rvc-engine');
 
 const SMOKE = !!process.env.VT_SMOKE;
@@ -13,6 +14,33 @@ if (E2E) {
 }
 
 const rvc = new RvcEngine(path.join(__dirname, 'models'));
+
+/* ---------- Local crash/diagnostic log (no telemetry) ---------- */
+
+let logDir = null;
+let logFile = null;
+
+function logLine(msg) {
+  try {
+    if (!logFile) return;
+    if (fs.existsSync(logFile) && fs.statSync(logFile).size > 1_000_000) {
+      fs.writeFileSync(logFile, '');
+    }
+    fs.appendFileSync(logFile, msg + '\n');
+  } catch (e) {}
+}
+
+function initLogging() {
+  try {
+    logDir = app.getPath('logs');
+    fs.mkdirSync(logDir, { recursive: true });
+    logFile = path.join(logDir, 'voicetweaker.log');
+    logLine(
+      `--- VoiceTweaker ${app.getVersion()} electron ${process.versions.electron} ` +
+        `${new Date().toISOString()}`
+    );
+  } catch (e) {}
+}
 
 function wrap(fn) {
   return async (...args) => {
@@ -36,6 +64,7 @@ ipcMain.handle('rvc:convert', async (_e, buf) => {
 });
 ipcMain.handle('rvc:addUrl', wrap((_e, name, url) => rvc.addUrl(name, url)));
 ipcMain.handle('rvc:openFolder', () => rvc.openFolder());
+ipcMain.handle('logs:open', () => (logDir ? shell.openPath(logDir) : 'logs indisponibles'));
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -57,11 +86,14 @@ function createWindow() {
 
   win.webContents.on('console-message', (event) => {
     console.log(`[renderer] ${event.message}`);
+    if (event.level === 'error') logLine(`[renderer:error] ${event.message}`);
     if (E2E && event.level === 'error') e2eConsoleErrors.push(event.message);
   });
 
   win.webContents.on('render-process-gone', (_e, details) => {
-    console.error(`[main] renderer gone: ${details.reason}`);
+    const msg = `[main] renderer gone: ${details.reason} exitCode=${details.exitCode}`;
+    console.error(msg);
+    logLine(msg);
     if (SMOKE || E2E) process.exit(1);
   });
 
@@ -70,6 +102,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  initLogging();
   session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
     callback(permission === 'media');
   });
@@ -154,10 +187,12 @@ app.on('window-all-closed', () => app.quit());
 
 process.on('uncaughtException', (err) => {
   console.error('[main] uncaught:', err);
+  logLine('[main] uncaught: ' + (err && err.stack ? err.stack : String(err)));
   if (SMOKE || E2E) process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
   console.error('[main] unhandled rejection:', reason);
+  logLine('[main] unhandled rejection: ' + (reason && reason.stack ? reason.stack : String(reason)));
   if (SMOKE || E2E) process.exit(1);
 });

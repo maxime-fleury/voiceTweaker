@@ -10,4 +10,5 @@ contextBridge.exposeInMainWorld('vt', {
     addUrl: (name, url) => ipcRenderer.invoke('rvc:addUrl', name, url),
     openFolder: () => ipcRenderer.invoke('rvc:openFolder'),
   },
+  openLogs: () => ipcRenderer.invoke('logs:open'),
 });

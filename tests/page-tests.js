@@ -32,7 +32,7 @@ module.exports = `(async () => {
     const ids = ['toggleBtn','micSelect','outSelect','monitorChk','meter','latency','toast',
       'presets','customName','saveCustomBtn','irFileBtn','irFile','rvcStatus','rvcVoice',
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
-      'statusDot','statusText','voiceSliders','fxSliders'];
+      'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn'];
     for (const id of ids) assert($(id), 'id manquant: ' + id);
     return ids.length + ' ids';
   });

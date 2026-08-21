@@ -138,6 +138,11 @@ function init() {
   });
 
   $('irFileBtn').addEventListener('click', () => $('irFile').click());
+
+  $('openLogsBtn').addEventListener('click', async () => {
+    const res = await window.vt.openLogs();
+    if (res) toast('Dossier de logs introuvable : ' + res);
+  });
   $('irFile').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
