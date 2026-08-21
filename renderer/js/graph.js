@@ -2,6 +2,13 @@
 
 const driveCache = new Map();
 
+// état transitoire du pipeline RVC (queue du chunk précédent, latence mesurée)
+const rvcState = { prevTail: null, latencyMs: 0 };
+
+function rvcActive() {
+  return rvc.enabled && rvc.loaded;
+}
+
 function driveCurve(amount) {
   const k = Math.round(amount);
   if (driveCache.has(k)) return driveCache.get(k);
@@ -241,11 +248,33 @@ function connectOutput() {
 async function sendRvcChunk(chunk) {
   if (!rvc.enabled || !rvc.loaded || rvc.busy) return;
   rvc.busy = true;
+  const t0 = performance.now();
   try {
-    const res = await window.vt.rvc.convert(chunk);
+    const transpose = Math.max(-24, Math.min(24, Math.round(params.pitch)));
+    const res = await window.vt.rvc.convert(chunk, transpose);
     if (res.ok && state.player) {
-      const audio = new Float32Array(res.audio);
-      state.player.port.postMessage({ audio }, [audio.buffer]);
+      const out = new Float32Array(res.audio);
+
+      // auto-gain : aligne le RMS de sortie sur celui d'entrée (borné)
+      let ei = 0, eo = 0;
+      for (let i = 0; i < chunk.length; i++) ei += chunk[i] * chunk[i];
+      for (let i = 0; i < out.length; i++) eo += out[i] * out[i];
+      const rmsIn = Math.sqrt(ei / Math.max(1, chunk.length));
+      const rmsOut = Math.sqrt(eo / Math.max(1, out.length));
+      const g = rmsOut > 1e-6 ? Math.min(4, Math.max(0.25, rmsIn / rmsOut)) : 1;
+      for (let i = 0; i < out.length; i++) out[i] *= g;
+
+      // crossfade 10 ms avec la fin du chunk précédent (anti-clic)
+      const XF = 480;
+      if (rvcState.prevTail && out.length > XF) {
+        for (let i = 0; i < XF; i++) {
+          const w = i / XF;
+          out[i] = out[i] * w + rvcState.prevTail[i] * (1 - w);
+        }
+      }
+      rvcState.prevTail = out.slice(Math.max(0, out.length - XF));
+
+      state.player.port.postMessage({ audio: out }, [out.buffer]);
     } else if (!res.ok && !rvc.errorShown) {
       rvc.errorShown = true;
       toast('RVC : ' + res.error);
@@ -254,6 +283,8 @@ async function sendRvcChunk(chunk) {
   } finally {
     rvc.busy = false;
   }
+  const dt = performance.now() - t0;
+  rvcState.latencyMs = rvcState.latencyMs ? rvcState.latencyMs * 0.8 + dt * 0.2 : dt;
 }
 
 function applyParams() {
@@ -272,7 +303,7 @@ function applyParams() {
   }
   if (state.voc) {
     state.voc.port.postMessage({
-      enabled: params.pitchQuality === 1,
+      enabled: params.pitchQuality === 1 && !rvcActive(),
       pitch: params.pitch,
       vibrDepth: params.vibrDepth,
       vibrRate: params.vibrRate,
@@ -291,7 +322,7 @@ function applyParams() {
       humanize: params.humanize,
       breath: params.breath,
       transients: params.transients,
-      bypassPitch: params.pitchQuality === 1 ? 1 : 0,
+      bypassPitch: params.pitchQuality === 1 || rvcActive() ? 1 : 0,
     });
   }
   if (state.nsWet) {
@@ -333,7 +364,9 @@ function updateLatency() {
   if (state.running && state.ctx) {
     let ms = (state.ctx.baseLatency + params.grain / 1000) * 1000;
     if (params.pitchQuality === 1) ms += 55;
-    if (rvc.enabled && rvc.loaded) ms += rvc.chunkMs;
+    if (rvcActive()) {
+      ms += rvcState.latencyMs > 0 ? Math.round(rvcState.latencyMs) : rvc.chunkMs;
+    }
     el.textContent = '~' + Math.round(ms) + ' ms';
   } else {
     el.textContent = '—';

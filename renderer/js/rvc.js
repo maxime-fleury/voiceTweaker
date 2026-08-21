@@ -96,6 +96,7 @@ async function initRvc() {
       return;
     }
     connectOutput();
+    applyParams();
     updateLatency();
   });
 
