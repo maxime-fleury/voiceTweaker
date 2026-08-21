@@ -9,19 +9,19 @@ async function refreshRvcStatus() {
 
   const el = $('rvcStatus');
   if (!s.ortOk) {
-    el.textContent = 'onnxruntime-node indisponible';
+    el.textContent = t('rvc.noOrt');
     el.className = 'rvc-status warn';
   } else if (!s.hubertOk) {
-    el.textContent = 'Encodeur hubert manquant (models/hubert/hubert.onnx)';
+    el.textContent = t('rvc.noHubert');
     el.className = 'rvc-status warn';
   } else if (!s.voices.length) {
-    el.textContent = 'Aucune voix — place les modèles dans models/';
+    el.textContent = t('rvc.noVoices');
     el.className = 'rvc-status warn';
   } else if (s.loaded) {
-    el.textContent = 'Prêt — voix « ' + s.loaded + ' » chargée';
+    el.textContent = t('rvc.loaded') + s.loaded + t('rvc.loadedEnd');
     el.className = 'rvc-status ok';
   } else {
-    el.textContent = s.voices.length + ' voix disponible(s) — charge-en une';
+    el.textContent = s.voices.length + t('rvc.available');
     el.className = 'rvc-status';
   }
 
@@ -43,16 +43,16 @@ async function initRvc() {
   $('rvcLoadBtn').addEventListener('click', async () => {
     const id = $('rvcVoice').value;
     if (!id) {
-      toast('Aucune voix à charger.');
+      toast(t('rvc.toastNoVoice'));
       return;
     }
     $('rvcLoadBtn').disabled = true;
     try {
       const res = await window.vt.rvc.load(id);
       if (!res.ok) throw new Error(res.error);
-      toast('Voix RVC « ' + id + ' » chargée.');
+      toast(t('rvc.toastLoaded') + id + t('rvc.toastLoadedEnd'));
     } catch (err) {
-      toast('Chargement RVC impossible : ' + err.message);
+      toast(t('rvc.toastLoadFail') + ' : ' + err.message);
     }
     $('rvcLoadBtn').disabled = false;
     refreshRvcStatus();
@@ -61,7 +61,7 @@ async function initRvc() {
   $('rvcEnable').addEventListener('change', (e) => {
     rvc.enabled = e.target.checked;
     if (rvc.enabled && !rvc.loaded) {
-      toast("Charge d'abord une voix RVC.");
+      toast(t('rvc.toastEnableFirst'));
       e.target.checked = false;
       rvc.enabled = false;
       return;
@@ -74,27 +74,27 @@ async function initRvc() {
     rvc.chunkMs = parseInt(e.target.value, 10);
     saveSettingsDebounced();
     updateLatency();
-    toast('Nouvelle latence appliquée au prochain démarrage.');
+    toast(t('rvc.toastChunkNext'));
   });
 
   $('rvcAddBtn').addEventListener('click', async () => {
     const name = $('rvcUrlName').value.trim();
     const url = $('rvcUrl').value.trim();
     if (!name || !url) {
-      toast('Indique un nom et une URL de modèle .onnx.');
+      toast(t('rvc.toastUrlNeed'));
       return;
     }
     $('rvcAddBtn').disabled = true;
-    toast('Téléchargement en cours…');
+    toast(t('rvc.toastDownloading'));
     const res = await window.vt.rvc.addUrl(name, url);
     $('rvcAddBtn').disabled = false;
     if (res.ok) {
-      toast('Voix « ' + name + ' » ajoutée.');
+      toast(t('rvc.toastAdded') + name + t('rvc.toastAddedEnd'));
       $('rvcUrlName').value = '';
       $('rvcUrl').value = '';
       refreshRvcStatus();
     } else {
-      toast('Téléchargement échoué : ' + res.error);
+      toast(t('rvc.toastDlFailed') + ' : ' + res.error);
     }
   });
 }

@@ -29,12 +29,12 @@ async function start() {
     try {
       await outAudio.setSinkId(outId);
     } catch (err) {
-      toast('Sortie audio refusée (' + err.name + ') : ' + err.message);
+      toast(t('toast.outputRefused') + ' (' + err.name + ') : ' + err.message);
     }
     try {
       await outAudio.play();
     } catch (err) {
-      toast('Lecture bloquée : ' + err.message);
+      toast(t('toast.playbackBlocked') + ' : ' + err.message);
     }
 
     state.running = true;
@@ -45,8 +45,9 @@ async function start() {
   } catch (err) {
     console.error(err);
     toast(
-      'Erreur : ' +
-        (err.name === 'NotAllowedError' ? 'accès micro refusé' : err.message || err)
+      err.name === 'NotAllowedError'
+        ? t('toast.micDenied')
+        : t('toast.errGeneric') + ' : ' + (err.message || err)
     );
     stop();
   }
@@ -79,6 +80,9 @@ function stop() {
 function init() {
   const saved = loadSettings();
 
+  applyStaticI18n();
+  $('langSelect').value = LANG_MODE;
+
   renderSliders('voiceSliders', 'voice');
   renderSliders('fxSliders', 'fx');
 
@@ -86,16 +90,27 @@ function init() {
 
   $('monitorChk').checked = !!saved.monitor;
 
+  $('langSelect').addEventListener('change', (e) => setLang(e.target.value));
+
+  onLangChange(() => {
+    renderSliders('voiceSliders', 'voice');
+    renderSliders('fxSliders', 'fx');
+    renderPresets();
+    setStatus(state.running);
+    updateLatency();
+    refreshRvcStatus();
+  });
+
   $('saveCustomBtn').addEventListener('click', () => {
     const name = $('customName').value.trim();
     if (!name) {
-      toast('Donne un nom à ta voix avant de sauvegarder.');
+      toast(t('toast.customNeedName'));
       return;
     }
     saveCustomPreset(name);
     $('customName').value = '';
     renderPresets();
-    toast('Voix « ' + name + ' » sauvegardée.');
+    toast(t('toast.customSaved') + ' « ' + name + ' ».');
   });
 
   $('toggleBtn').addEventListener('click', () => (state.running ? stop() : start()));
@@ -123,7 +138,7 @@ function init() {
     try {
       await outAudio.setSinkId($('outSelect').value || 'default');
     } catch (err) {
-      toast('Impossible de changer la sortie (' + err.name + ') : ' + err.message);
+      toast(t('toast.outputRefused') + ' (' + err.name + ') : ' + err.message);
     }
   });
 
@@ -147,7 +162,7 @@ function init() {
     const file = e.target.files[0];
     if (!file) return;
     if (!state.ctx) {
-      toast('Démarre le traitement avant de charger une IR.');
+      toast(t('toast.irNeedStart'));
       e.target.value = '';
       return;
     }
@@ -155,19 +170,24 @@ function init() {
       const data = await file.arrayBuffer();
       state.customIr = await state.ctx.decodeAudioData(data);
       rebuildConvolver();
-      toast('IR « ' + file.name + ' » chargée.');
+      toast(t('toast.irLoaded') + ' « ' + file.name + ' »');
     } catch (err) {
-      toast('Impossible de décoder ce fichier : ' + err.message);
+      toast(t('toast.irDecodeFail') + ' : ' + err.message);
     }
     e.target.value = '';
+  });
+
+  $('openLogsBtn').addEventListener('click', async () => {
+    const res = await window.vt.openLogs();
+    if (res) toast(t('toast.logsMissing') + ' : ' + res);
   });
 
   navigator.mediaDevices.addEventListener?.('devicechange', listDevices);
 
   window.vt.updater?.onUpdate(({ type, info }) => {
-    if (type === 'available') toast('Mise à jour ' + info + ' disponible — téléchargement…');
+    if (type === 'available') toast(t('toast.updAvailable').replace('{v}', info));
     else if (type === 'downloaded') {
-      toast('Mise à jour ' + info + ' prête — elle s\'installera à la fermeture de l\'app.');
+      toast(t('toast.updReady').replace('{v}', info));
     }
   });
 

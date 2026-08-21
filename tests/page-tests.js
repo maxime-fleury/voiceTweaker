@@ -32,7 +32,7 @@ module.exports = `(async () => {
     const ids = ['toggleBtn','micSelect','outSelect','monitorChk','meter','latency','toast',
       'presets','customName','saveCustomBtn','irFileBtn','irFile','rvcStatus','rvcVoice',
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
-      'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn'];
+      'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect'];
     for (const id of ids) assert($(id), 'id manquant: ' + id);
     return ids.length + ' ids';
   });
@@ -216,6 +216,24 @@ module.exports = `(async () => {
     assert(params.timbre === -6, 'timbre=' + params.timbre);
     assert(params.drive === 10, 'drive=' + params.drive);
     clickChip('naturel');
+    return 'ok';
+  });
+
+  await test('i18n: bascule FR vers EN puis retour', () => {
+    const sel = $('langSelect');
+    sel.value = 'en';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    assert($('toggleBtn').textContent === 'Start', 'start=' + $('toggleBtn').textContent);
+    assert($('statusText').textContent === 'Stopped', 'status=' + $('statusText').textContent);
+    const chipFem = document.querySelector('.chip[data-key="feminin"]');
+    assert(chipFem.textContent === 'Female', 'chip=' + chipFem.textContent);
+    const meta = JSON.parse(localStorage.getItem('vt_settings'));
+    assert(meta.lang === 'en', 'persist=' + meta.lang);
+    sel.value = 'fr';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    assert($('toggleBtn').textContent === 'Démarrer', 'retour=' + $('toggleBtn').textContent);
+    assert(document.querySelector('.chip[data-key="feminin"]').textContent === 'Féminin',
+      'chip fr=' + document.querySelector('.chip[data-key="feminin"]').textContent);
     return 'ok';
   });
 

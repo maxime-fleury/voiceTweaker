@@ -12,9 +12,9 @@ function toast(msg) {
 
 function setStatus(on) {
   $('statusDot').classList.toggle('on', on);
-  $('statusText').textContent = on ? 'Actif' : 'Arrêté';
+  $('statusText').textContent = on ? t('status.active') : t('status.stopped');
   const btn = $('toggleBtn');
-  btn.textContent = on ? 'Arrêter' : 'Démarrer';
+  btn.textContent = on ? t('btn.stop') : t('btn.start');
   btn.classList.toggle('stop', on);
   document.body.classList.toggle('running', on);
 }
@@ -36,6 +36,7 @@ function saveSettingsNow() {
     outId: $('outSelect').value || 'default',
     monitor: $('monitorChk').checked,
     chunkMs: rvc.chunkMs,
+    lang: LANG_MODE,
   };
   for (const s of SLIDERS) meta.params[s.id] = params[s.id];
   meta.params.low = typeof params.low === 'number' ? params.low : null;
@@ -82,7 +83,7 @@ async function listDevices() {
   for (const d of mics) {
     const opt = document.createElement('option');
     opt.value = d.deviceId;
-    opt.textContent = d.label || 'Microphone (' + d.deviceId.slice(0, 8) + '…)';
+    opt.textContent = d.label || t('dev.micFallback') + ' (' + d.deviceId.slice(0, 8) + '…)';
     micSel.appendChild(opt);
   }
   const wantMic = prevMic || saved.micId;
@@ -93,13 +94,13 @@ async function listDevices() {
   outSel.innerHTML = '';
   const def = document.createElement('option');
   def.value = 'default';
-  def.textContent = 'Sortie par défaut du système';
+  def.textContent = t('dev.systemDefault');
   outSel.appendChild(def);
   for (const d of outs) {
     if (d.deviceId === 'default') continue;
     const opt = document.createElement('option');
     opt.value = d.deviceId;
-    opt.textContent = d.label || 'Sortie (' + d.deviceId.slice(0, 8) + '…)';
+    opt.textContent = d.label || t('dev.outFallback') + ' (' + d.deviceId.slice(0, 8) + '…)';
     outSel.appendChild(opt);
   }
   const wantOut = prevOut !== 'default' && prevOut ? prevOut : saved.outId;
@@ -144,8 +145,8 @@ function renderSliders(containerId, group) {
 
     const lbl = document.createElement('span');
     lbl.className = 'lbl';
-    lbl.textContent = s.label;
-    lbl.title = s.tip || '';
+    lbl.textContent = typeof s.label === 'function' ? s.label() : s.label;
+    if (s.tip) lbl.title = typeof s.tip === 'function' ? s.tip() : s.tip;
     row.appendChild(lbl);
 
     let control;
@@ -153,11 +154,11 @@ function renderSliders(containerId, group) {
       control = document.createElement('select');
       control.className = 'inline-select';
       control.id = s.id;
-      control.title = s.tip || '';
+      if (s.tip) control.title = typeof s.tip === 'function' ? s.tip() : s.tip;
       for (const o of s.options) {
         const opt = document.createElement('option');
         opt.value = o.value;
-        opt.textContent = o.label;
+        opt.textContent = typeof o.label === 'function' ? o.label() : o.label;
         control.appendChild(opt);
       }
       control.addEventListener('change', () => {
@@ -174,7 +175,7 @@ function renderSliders(containerId, group) {
       control.max = s.max;
       control.step = s.step;
       control.value = params[s.id];
-      control.title = s.tip || '';
+      if (s.tip) control.title = typeof s.tip === 'function' ? s.tip() : s.tip;
       control.addEventListener('input', () => {
         params[s.id] = parseFloat(control.value);
         if (s.id === 'timbre') {
@@ -218,14 +219,14 @@ function renderPresets() {
   const customs = getCustomPresets();
   const groups = [
     ...PRESET_GROUPS,
-    { name: 'Mes voix', keys: Object.keys(customs), custom: true },
+    { nameKey: 'group.mine', keys: Object.keys(customs), custom: true },
   ];
 
   for (const group of groups) {
     if (!group.keys.length) continue;
     const title = document.createElement('h3');
     title.className = 'group-title';
-    title.textContent = group.name;
+    title.textContent = group.nameKey ? t(group.nameKey) : group.name;
     wrap.appendChild(title);
 
     const chips = document.createElement('div');
@@ -235,7 +236,7 @@ function renderPresets() {
       const chip = document.createElement('button');
       chip.className = 'chip';
       chip.dataset.key = key;
-      chip.textContent = preset.label;
+      chip.textContent = preset.labelKey ? t(preset.labelKey) : preset.label;
       chip.addEventListener('click', () => applyPreset(key));
       if (group.custom) {
         const del = document.createElement('span');
