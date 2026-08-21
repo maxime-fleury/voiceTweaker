@@ -108,6 +108,8 @@ function init() {
 
   $('monitorChk').checked = !!saved.monitor;
 
+  initTabs(saved);
+
   $('nsEnable').checked = !!params.nsEnabled;
   $('s_nsStrength').value = String(params.nsStrength);
   $('v_nsStrength').textContent = Math.round(params.nsStrength) + ' %';
@@ -123,6 +125,35 @@ function init() {
     $('v_nsStrength').textContent = Math.round(params.nsStrength) + ' %';
     applyParams();
     saveSettingsDebounced();
+  });
+
+  let resetArmed = 0;
+  $('resetBtn').addEventListener('click', () => {
+    const now = Date.now();
+    if (now - resetArmed > 3000) {
+      resetArmed = now;
+      toast(t('toast.resetConfirm'));
+      return;
+    }
+    resetArmed = 0;
+    resetAllSettings();
+    toast(t('toast.resetDone'));
+  });
+
+  window.vt.appInfo().then((info) => {
+    const el = document.getElementById('appVersion');
+    if (!el) {
+      console.error('[vt] #appVersion introuvable dans le DOM');
+      return;
+    }
+    el.textContent = 'v' + info.version;
+  }).catch((e) => console.error('[vt] appInfo:', e && e.message));
+
+  $('ghBtn').addEventListener('click', () => {
+    window.vt.openUrl('https://github.com/maxime-fleury/voiceTweaker');
+  });
+  $('sponsorBtn').addEventListener('click', () => {
+    window.vt.openUrl('https://github.com/sponsors/maxime-fleury');
   });
 
   $('langSelect').addEventListener('change', (e) => setLang(e.target.value));

@@ -66,6 +66,11 @@ ipcMain.handle('rvc:convert', async (_e, buf) => {
 ipcMain.handle('rvc:addUrl', wrap((_e, name, url) => rvc.addUrl(name, url)));
 ipcMain.handle('rvc:openFolder', () => rvc.openFolder());
 ipcMain.handle('logs:open', () => (logDir ? shell.openPath(logDir) : 'logs indisponibles'));
+ipcMain.handle('app:info', () => ({ version: app.getVersion(), platform: process.platform }));
+ipcMain.handle('app:open', (_e, url) => {
+  if (typeof url === 'string' && url.startsWith('https://')) shell.openExternal(url);
+  return { ok: true };
+});
 ipcMain.handle('updater:check', () => {
   if (!app.isPackaged || SMOKE || E2E) return { ok: false, error: 'indisponible en dev' };
   autoUpdater.checkForUpdates().catch((err) => logLine('[updater] check failed: ' + err.message));

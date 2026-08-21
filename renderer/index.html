@@ -19,99 +19,152 @@
     </div>
   </header>
 
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button class="tab active" data-tab="voix" data-i18n="tab.voice">Voix</button>
+    <button class="tab" data-tab="effets" data-i18n="tab.fx">Effets</button>
+    <button class="tab" data-tab="audio" data-i18n="tab.audio">Audio</button>
+    <button class="tab" data-tab="rvc">RVC</button>
+    <button class="tab" data-tab="settings" data-i18n="tab.settings">Réglages</button>
+  </nav>
+
   <main>
-    <section class="card">
-      <h2 data-i18n="card.devices">Périphériques</h2>
-      <label for="micSelect" data-i18n="label.mic">Microphone (entrée)</label>
-      <select id="micSelect"></select>
-      <label for="outSelect" data-i18n="label.out">Sortie audio</label>
-      <select id="outSelect"></select>
-      <label class="check">
-        <input type="checkbox" id="monitorChk" />
-        <span data-i18n="label.monitor">S'entendre (test de voix)</span>
-      </label>
-      <label class="check">
-        <input type="checkbox" id="nsEnable" checked />
-        <span data-i18n="label.ns">Réduction de bruit (RNNoise)</span>
-      </label>
-      <div class="row">
-        <span class="lbl" data-i18n="slider.nsStrength" title="">Force NS</span>
-        <input type="range" id="s_nsStrength" min="0" max="100" step="1" value="60" />
-        <span class="val" id="v_nsStrength">60 %</span>
-      </div>
-      <p class="hint" data-i18n-html="hint.vbcable">
-        Pour un micro virtuel dans Discord / OBS / jeux : installez
-        <b>VB-CABLE</b> (gratuit), choisissez <b>CABLE Input</b> comme sortie ici,
-        puis <b>CABLE Output</b> comme microphone dans l'application cible.
-        Utilisez un casque pour éviter le larsen.
-      </p>
-      <label for="langSelect" data-i18n="label.lang">Langue</label>
-      <select id="langSelect">
-        <option value="auto">Auto</option>
-        <option value="fr">Français</option>
-        <option value="en">English</option>
-      </select>
-      <div class="custom-row">
-        <button id="openLogsBtn" class="small ghost" data-i18n="btn.openLogs">Ouvrir les logs</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2 data-i18n="card.presets">Voix prédéfinies</h2>
-      <div id="presets"></div>
-      <div class="custom-row">
-        <input type="text" id="customName" placeholder="Nom de ta voix…" maxlength="24" data-i18n-placeholder="placeholder.customName" />
-        <button id="saveCustomBtn" class="small" data-i18n="btn.save">Sauver</button>
-      </div>
-    </section>
-
-    <section class="card wide">
-      <h2 data-i18n="card.voice">Voix &amp; réalisme</h2>
-      <div class="sliders" id="voiceSliders"></div>
-    </section>
-
-    <section class="card wide">
-      <h2 data-i18n="card.fx">Effets</h2>
-      <div class="sliders" id="fxSliders"></div>
-      <div class="custom-row">
-        <button id="irFileBtn" class="small ghost" data-i18n="btn.loadIR">Charger une IR personnalisée (.wav)…</button>
-        <input type="file" id="irFile" accept=".wav,.ogg,.mp3,.flac" hidden />
-      </div>
-    </section>
-
-    <section class="card wide">
-      <h2 data-i18n="card.rvc">Conversion neuronale (RVC — expérimental)</h2>
-      <div class="rvc-grid">
-        <div class="rvc-row">
-          <span class="lbl" data-i18n="rvc.state">État</span>
-          <span id="rvcStatus" class="rvc-status">Vérification…</span>
+    <!-- ==================== VOIX ==================== -->
+    <section class="panel active" id="panel-voix">
+      <section class="card wide">
+        <h2 data-i18n="card.presets">Voix prédéfinies</h2>
+        <div id="presets"></div>
+        <div class="custom-row">
+          <input type="text" id="customName" placeholder="Nom de ta voix…" maxlength="24" data-i18n-placeholder="placeholder.customName" />
+          <button id="saveCustomBtn" class="small" data-i18n="btn.save">Sauver</button>
         </div>
-        <div class="rvc-row">
-          <span class="lbl" data-i18n="rvc.voice">Voix RVC</span>
-          <select id="rvcVoice"></select>
-          <button id="rvcLoadBtn" class="small" data-i18n="btn.load">Charger</button>
+      </section>
+
+      <section class="card wide">
+        <h2 data-i18n="card.voice">Voix &amp; réalisme</h2>
+        <div class="sliders two-col" id="voiceSliders"></div>
+      </section>
+    </section>
+
+    <!-- ==================== EFFETS ==================== -->
+    <section class="panel" id="panel-effets">
+      <section class="card wide">
+        <h2 data-i18n="card.fx">Effets</h2>
+        <div class="sliders two-col" id="fxSliders"></div>
+        <div class="custom-row">
+          <button id="irFileBtn" class="small ghost" data-i18n="btn.loadIR">Charger une IR personnalisée (.wav)…</button>
+          <input type="file" id="irFile" accept=".wav,.ogg,.mp3,.flac" hidden />
         </div>
-        <div class="rvc-row">
-          <span class="lbl" data-i18n="rvc.chunk">Latence (bloc)</span>
-          <select id="rvcChunk">
-            <option value="256">256 ms</option>
-            <option value="384">384 ms</option>
-            <option value="512" selected>512 ms</option>
+      </section>
+    </section>
+
+    <!-- ==================== AUDIO ==================== -->
+    <section class="panel" id="panel-audio">
+      <section class="card wide">
+        <h2 data-i18n="card.devices">Périphériques</h2>
+        <div class="dev-grid">
+          <div>
+            <label for="micSelect" data-i18n="label.mic">Microphone (entrée)</label>
+            <select id="micSelect"></select>
+          </div>
+          <div>
+            <label for="outSelect" data-i18n="label.out">Sortie audio</label>
+            <select id="outSelect"></select>
+          </div>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="monitorChk" />
+          <span data-i18n="label.monitor">S'entendre (test de voix)</span>
+        </label>
+        <p class="hint" data-i18n-html="hint.vbcable">
+          Pour un micro virtuel dans Discord / OBS / jeux : installez
+          <b>VB-CABLE</b> (gratuit), choisissez <b>CABLE Input</b> comme sortie ici,
+          puis <b>CABLE Output</b> comme microphone dans l'application cible.
+          Utilisez un casque pour éviter le larsen.
+        </p>
+      </section>
+
+      <section class="card wide">
+        <h2 data-i18n="card.ns">Réduction de bruit</h2>
+        <label class="check">
+          <input type="checkbox" id="nsEnable" checked />
+          <span data-i18n="label.ns">Réduction de bruit (RNNoise)</span>
+        </label>
+        <div class="row">
+          <span class="lbl" data-i18n="slider.nsStrength">Force NS</span>
+          <input type="range" id="s_nsStrength" min="0" max="100" step="1" value="60" />
+          <span class="val" id="v_nsStrength">60 %</span>
+        </div>
+      </section>
+    </section>
+
+    <!-- ==================== RVC ==================== -->
+    <section class="panel" id="panel-rvc">
+      <section class="card wide">
+        <h2 data-i18n="card.rvc">Conversion neuronale (RVC — expérimental)</h2>
+        <div class="rvc-grid">
+          <div class="rvc-row">
+            <span class="lbl" data-i18n="rvc.state">État</span>
+            <span id="rvcStatus" class="rvc-status">Vérification…</span>
+          </div>
+          <div class="rvc-row">
+            <span class="lbl" data-i18n="rvc.voice">Voix RVC</span>
+            <select id="rvcVoice"></select>
+            <button id="rvcLoadBtn" class="small" data-i18n="btn.load">Charger</button>
+          </div>
+          <div class="rvc-row">
+            <span class="lbl" data-i18n="rvc.chunk">Latence (bloc)</span>
+            <select id="rvcChunk">
+              <option value="256">256 ms</option>
+              <option value="384">384 ms</option>
+              <option value="512" selected>512 ms</option>
+            </select>
+            <label class="check inline"><input type="checkbox" id="rvcEnable" /><span data-i18n="rvc.enable"> Activer sur la sortie</span></label>
+          </div>
+          <div class="rvc-row">
+            <span class="lbl" data-i18n="rvc.addUrl">Ajouter par URL</span>
+            <input type="text" id="rvcUrlName" placeholder="nom" maxlength="30" data-i18n-placeholder="placeholder.rvcName" />
+            <input type="text" id="rvcUrl" placeholder="https://…/model.onnx" />
+            <button id="rvcAddBtn" class="small" data-i18n="btn.download">Télécharger</button>
+          </div>
+        </div>
+        <p class="hint" data-i18n-html="hint.rvc">
+          Place les modèles dans <b>models/&lt;nom&gt;/model.onnx</b> (export ONNX officiel RVC)
+          et l'encodeur dans <b>models/hubert/hubert.onnx</b>, puis recharge.
+          Les modèles tournent sur CPU : compte ~300-700 ms de latence supplémentaire.
+        </p>
+      </section>
+    </section>
+
+    <!-- ==================== RÉGLAGES ==================== -->
+    <section class="panel" id="panel-settings">
+      <section class="card wide">
+        <h2 data-i18n="settings.general">Général</h2>
+        <div class="row">
+          <span class="lbl" data-i18n="label.lang">Langue</span>
+          <select id="langSelect">
+            <option value="auto">Auto</option>
+            <option value="fr">Français</option>
+            <option value="en">English</option>
           </select>
-          <label class="check inline"><input type="checkbox" id="rvcEnable" /><span data-i18n="rvc.enable"> Activer sur la sortie</span></label>
+          <span class="val"></span>
         </div>
-        <div class="rvc-row">
-          <span class="lbl" data-i18n="rvc.addUrl">Ajouter par URL</span>
-          <input type="text" id="rvcUrlName" placeholder="nom" maxlength="30" data-i18n-placeholder="placeholder.rvcName" />
-          <input type="text" id="rvcUrl" placeholder="https://…/model.onnx" />
-          <button id="rvcAddBtn" class="small" data-i18n="btn.download">Télécharger</button>
+
+        <h2 data-i18n="settings.maintenance">Maintenance</h2>
+        <div class="btn-row">
+          <button id="openLogsBtn" class="small ghost" data-i18n="btn.openLogs">Ouvrir les logs</button>
+          <button id="resetBtn" class="small ghost danger" data-i18n="settings.reset">Réinitialiser les réglages</button>
         </div>
-      </div>
-      <p class="hint" data-i18n-html="hint.rvc">
-        Place les modèles dans <b>models/&lt;nom&gt;/model.onnx</b> (export ONNX officiel RVC)
-        et l'encodeur dans <b>models/hubert/hubert.onnx</b>, puis recharge.
-        Les modèles tournent sur CPU : compte ~300-700 ms de latence supplémentaire.
-      </p>
+
+        <h2 data-i18n="settings.about">À propos</h2>
+        <p class="about">
+          VoiceTweaker <span id="appVersion"></span> —
+          <span data-i18n="settings.tagline">changeur de voix temps réel, 100 % local et open source.</span>
+        </p>
+        <div class="btn-row">
+          <button id="ghBtn" class="small ghost">GitHub</button>
+          <button id="sponsorBtn" class="small heart" data-i18n="btn.sponsor">Soutenir le projet</button>
+        </div>
+      </section>
     </section>
   </main>
 

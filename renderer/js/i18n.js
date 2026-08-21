@@ -10,6 +10,21 @@ const I18N_DICT = {
     'btn.start': 'Démarrer',
     'btn.stop': 'Arrêter',
 
+    'tab.voice': 'Voix',
+    'tab.fx': 'Effets',
+    'tab.audio': 'Audio',
+    'tab.settings': 'Réglages',
+
+    'card.ns': 'Réduction de bruit',
+    'settings.general': 'Général',
+    'settings.maintenance': 'Maintenance',
+    'settings.about': 'À propos',
+    'settings.reset': 'Réinitialiser les réglages',
+    'settings.tagline': 'changeur de voix temps réel, 100 % local et open source.',
+    'btn.sponsor': 'Soutenir le projet',
+    'toast.resetConfirm': 'Reclique pour confirmer la réinitialisation.',
+    'toast.resetDone': 'Réglages réinitialisés.',
+
     'card.devices': 'Périphériques',
     'card.presets': 'Voix prédéfinies',
     'card.voice': 'Voix & réalisme',
@@ -165,6 +180,21 @@ const I18N_DICT = {
     'status.active': 'Active',
     'btn.start': 'Start',
     'btn.stop': 'Stop',
+
+    'tab.voice': 'Voice',
+    'tab.fx': 'Effects',
+    'tab.audio': 'Audio',
+    'tab.settings': 'Settings',
+
+    'card.ns': 'Noise suppression',
+    'settings.general': 'General',
+    'settings.maintenance': 'Maintenance',
+    'settings.about': 'About',
+    'settings.reset': 'Reset settings',
+    'settings.tagline': 'real-time voice changer, 100% local and open source.',
+    'btn.sponsor': 'Support the project',
+    'toast.resetConfirm': 'Click again to confirm the reset.',
+    'toast.resetDone': 'Settings reset.',
 
     'card.devices': 'Devices',
     'card.presets': 'Voice presets',

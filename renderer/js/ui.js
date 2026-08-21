@@ -29,6 +29,29 @@ function savedSettings() {
   }
 }
 
+function currentTab() {
+  const t = document.querySelector('.tab.active');
+  return t ? t.dataset.tab : 'voix';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+
+function initTabs(saved) {
+  document.querySelectorAll('.tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === currentTab()) return;
+      switchTab(btn.dataset.tab);
+      saveSettingsNow();
+    });
+  });
+  if (saved.tab && document.getElementById('panel-' + saved.tab)) {
+    switchTab(saved.tab);
+  }
+}
+
 function saveSettingsNow() {
   const meta = {
     params: {},
@@ -37,6 +60,7 @@ function saveSettingsNow() {
     monitor: $('monitorChk').checked,
     chunkMs: rvc.chunkMs,
     lang: LANG_MODE,
+    tab: currentTab(),
   };
   for (const s of SLIDERS) meta.params[s.id] = params[s.id];
   meta.params.low = typeof params.low === 'number' ? params.low : null;
@@ -291,6 +315,31 @@ function applyPreset(key) {
 
   document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('active', c.dataset.key === key));
   saveSettingsDebounced();
+}
+
+/* ---------- Reset ---------- */
+
+function resetAllSettings() {
+  for (const s of SLIDERS) params[s.id] = s.value;
+  params.low = null;
+  params.high = null;
+  params.nsEnabled = true;
+  params.nsStrength = 60;
+
+  renderSliders('voiceSliders', 'voice');
+  renderSliders('fxSliders', 'fx');
+
+  $('nsEnable').checked = true;
+  $('s_nsStrength').value = '60';
+  $('v_nsStrength').textContent = '60 %';
+
+  state.customIr = null;
+  rebuildConvolver();
+  applyParams();
+  updateLatency();
+
+  document.querySelectorAll('.chip.active').forEach((c) => c.classList.remove('active'));
+  saveSettingsNow();
 }
 
 /* ---------- Meter ---------- */

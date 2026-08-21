@@ -32,7 +32,8 @@ module.exports = `(async () => {
     const ids = ['toggleBtn','micSelect','outSelect','monitorChk','meter','latency','toast',
       'presets','customName','saveCustomBtn','irFileBtn','irFile','rvcStatus','rvcVoice',
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
-      'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect'];
+      'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect',
+      'resetBtn','appVersion','ghBtn','sponsorBtn'];
     for (const id of ids) assert($(id), 'id manquant: ' + id);
     return ids.length + ' ids';
   });
@@ -291,6 +292,17 @@ module.exports = `(async () => {
     assert(params.timbre === -6, 'timbre=' + params.timbre);
     assert(params.drive === 10, 'drive=' + params.drive);
     clickChip('naturel');
+    return 'ok';
+  });
+
+  await test('tabs: navigation et persistance', () => {
+    document.querySelector('.tab[data-tab="effets"]').click();
+    assert(document.getElementById('panel-effets').classList.contains('active'), 'panel effets inactif');
+    assert(!document.getElementById('panel-voix').classList.contains('active'), 'panel voix encore actif');
+    const meta = JSON.parse(localStorage.getItem('vt_settings'));
+    assert(meta.tab === 'effets', 'tab persiste=' + meta.tab);
+    document.querySelector('.tab[data-tab="voix"]').click();
+    assert(document.getElementById('panel-voix').classList.contains('active'), 'retour voix ko');
     return 'ok';
   });
 
