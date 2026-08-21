@@ -76,13 +76,13 @@ Utilisez un casque pour éviter le larsen.
 
 ## Conversion neuronale RVC (expérimental)
 
-Remplace le traitement DSP par un vrai modèle de voice conversion. Latence supplémentaire ~300-700 ms (CPU).
+Remplace le traitement DSP par un vrai modèle de voice conversion. Latence supplémentaire ~300-700 ms (CPU), moins avec GPU.
 
-1. Récupérez un export ONNX d'encodeur HuBERT et placez-le dans `models/hubert/hubert.onnx`.
-2. Placez une voix exportée ONNX (script d'export officiel RVC) dans `models/<nom>/model.onnx`.
+1. Récupérez un export ONNX d'encodeur (**HuBERT** 256-dim ou **ContentVec** 768-dim) et placez-le dans `models/hubert/hubert.onnx`.
+2. Placez une voix exportée ONNX (script d'export officiel RVC, même dim que l'encodeur) dans `models/<nom>/model.onnx`.
 3. Relancez l'app : la voix apparaît dans la carte RVC → **Charger** → cochez **Activer sur la sortie**.
 
-Vous pouvez aussi ajouter un modèle par URL directe (.onnx) depuis l'interface. Le bouton « État » affiche ce qui manque. Sans modèle, tout le reste de l'app fonctionne normalement.
+Sur Windows, l'inférence tente **DirectML (GPU)** en premier et retombe sur CPU automatiquement — le backend actif s'affiche à côté de la voix chargée. Le slider **Pitch** devient la transposition du modèle (+/-24 demi-tons). Vous pouvez aussi importer des modèles locaux via **Importer un .onnx…**, ajouter un modèle par URL directe, ou supprimer une voix. Sans modèle, tout le reste de l'app fonctionne normalement.
 
 ## Technique
 

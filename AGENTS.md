@@ -84,6 +84,7 @@ contre `startRendering()` — bug déjà corrigé une fois).
 - `pitch-vocoder` : `{enabled(0|1), pitch, vibrDepth, vibrRate, humanize}` — mode « Qualité max » ; quand actif, voice-processor reçoit `bypassPitch:1`
 - `formant-processor` : `{alpha}` (alpha = 2^(formant*4/1200))
 - `stream-tap` → chunks Float32Array vers RVC ; `chunk-player` accepte `{audio: Float32Array}` (transférable)
+- RVC : `convert(chunk, transpose)` ; quand RVC est actif, voice-processor reçoit `bypassPitch:1` et le vocoder se coupe — le slider Pitch devient la transposition du modèle
 
 ## Règles d'or
 
