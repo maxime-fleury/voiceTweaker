@@ -113,11 +113,26 @@ module.exports = `(async () => {
     const meta = JSON.parse(localStorage.getItem('vt_settings'));
     meta.params.pitch = 99;
     meta.params.grain = -50;
+    meta.params.low = -9;
     localStorage.setItem('vt_settings', JSON.stringify(meta));
     loadSettings();
     assert(params.pitch === 12, 'pitch=' + params.pitch);
     assert(params.grain === 40, 'grain=' + params.grain);
+    assert(params.low === -9, 'low=' + params.low);
     saveSettingsNow();
+    const saved2 = JSON.parse(localStorage.getItem('vt_settings'));
+    assert(saved2.params.low === -9, 'low persiste=' + saved2.params.low);
+    return 'ok';
+  });
+
+  await test('preset EQ: low/high appliques puis reinitialises', () => {
+    clickChip('etouffe');
+    assert(params.low === -14 && params.high === -12, 'eq=' + params.low + '/' + params.high);
+    clickChip('feminin');
+    assert(params.low === null && params.high === null, 'override non nettoye');
+    clickRange('s_timbre', 3);
+    assert(params.low === null && params.high === null, 'timbre doit lever les overrides');
+    clickChip('naturel');
     return 'ok';
   });
 
@@ -186,6 +201,7 @@ module.exports = `(async () => {
 
   await test('presets: sequence rapide sans erreur', () => {
     clickChip('telephone');
+    assert(params.low === -18 && params.high === -14, 'eq tel=' + params.low + '/' + params.high);
     clickChip('radio');
     clickChip('etouffe');
     assert(params.timbre === -6, 'timbre=' + params.timbre);

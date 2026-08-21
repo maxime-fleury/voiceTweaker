@@ -192,8 +192,8 @@ function applyParams() {
   const n = state.nodes;
   if (!n.peak) return;
   n.peak.gain.value = params.timbre;
-  n.low.gain.value = -(params.timbre * 0.4);
-  n.high.gain.value = params.timbre * 0.5;
+  n.low.gain.value = params.low ?? -(params.timbre * 0.4);
+  n.high.gain.value = params.high ?? params.timbre * 0.5;
   n.shaper.curve = driveCurve(params.drive);
   n.wet.gain.value = (params.reverb / 100) * 0.9;
   n.echoDelay.delayTime.value = params.echoTime / 1000;

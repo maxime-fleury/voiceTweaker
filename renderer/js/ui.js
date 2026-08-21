@@ -38,6 +38,8 @@ function saveSettingsNow() {
     chunkMs: rvc.chunkMs,
   };
   for (const s of SLIDERS) meta.params[s.id] = params[s.id];
+  meta.params.low = typeof params.low === 'number' ? params.low : null;
+  meta.params.high = typeof params.high === 'number' ? params.high : null;
   localStorage.setItem('vt_settings', JSON.stringify(meta));
 }
 
@@ -56,6 +58,10 @@ function loadSettings() {
       } else if (typeof v === 'number' && isFinite(v)) {
         params[s.id] = Math.min(s.max, Math.max(s.min, v));
       }
+    }
+    for (const k of ['low', 'high']) {
+      const v = saved.params[k];
+      if (v === null || (typeof v === 'number' && isFinite(v))) params[k] = v;
     }
   }
   if (typeof saved.chunkMs === 'number') rvc.chunkMs = saved.chunkMs;
@@ -171,6 +177,10 @@ function renderSliders(containerId, group) {
       control.title = s.tip || '';
       control.addEventListener('input', () => {
         params[s.id] = parseFloat(control.value);
+        if (s.id === 'timbre') {
+          params.low = null;
+          params.high = null;
+        }
         updateSliderFill(control);
         setValueLabel(s.id);
         applyParams();
@@ -248,7 +258,9 @@ function applyPreset(key) {
   const preset = ALL_PRESETS[key];
   if (!preset) return;
   const merged = Object.assign({}, DEFAULT_PARAMS, preset.p);
-  for (const k of Object.keys(params)) params[k] = merged[k];
+  for (const s of SLIDERS) params[s.id] = merged[s.id];
+  params.low = typeof preset.p.low === 'number' ? preset.p.low : null;
+  params.high = typeof preset.p.high === 'number' ? preset.p.high : null;
 
   for (const s of SLIDERS) {
     if (s.type === 'select') {
@@ -263,12 +275,6 @@ function applyPreset(key) {
   rebuildConvolver();
   applyParams();
   updateLatency();
-
-  const n = state.nodes;
-  if (preset.p.low !== undefined && n.low) {
-    n.low.gain.value = preset.p.low;
-    n.high.gain.value = preset.p.high;
-  }
 
   document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('active', c.dataset.key === key));
   saveSettingsDebounced();

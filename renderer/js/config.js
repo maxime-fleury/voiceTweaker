@@ -55,6 +55,10 @@ const SLIDERS = [
 const params = {};
 for (const s of SLIDERS) params[s.id] = s.value;
 
+// EQ overrides set by presets (etouffe, telephone...) — null = derive from timbre.
+params.low = null;
+params.high = null;
+
 const DEFAULT_PARAMS = Object.assign({}, params);
 
 const SLIDER_IDS = SLIDERS.filter((s) => s.type !== 'select').map((s) => s.id);
