@@ -23,17 +23,58 @@
     "start": "electron .",
     "icon": "node scripts/make-icon.mjs",
     "smoke": "node scripts/smoke-runner.mjs",
-    "test:e2e": "node scripts/e2e-runner.mjs"
+    "test:e2e": "node scripts/e2e-runner.mjs",
+    "dist:dir": "electron-builder --dir",
+    "dist": "electron-builder --win nsis x64"
+  },
+  "build": {
+    "appId": "com.maximefleury.voicetweaker",
+    "productName": "VoiceTweaker",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "rvc-engine.js",
+      "renderer/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "renderer/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "VoiceTweaker-Setup-${version}.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "maxime-fleury",
+      "repo": "voiceTweaker"
+    }
   },
   "trustedDependencies": [
     "electron",
+    "electron-winstaller",
     "onnxruntime-node"
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "electron": "^43.4.1"
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "onnxruntime-node": "^1.27.0"
   }
 }
