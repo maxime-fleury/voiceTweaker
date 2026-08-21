@@ -35,7 +35,7 @@ module.exports = `(async () => {
       'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect',
       'resetBtn','appVersion','ghBtn','sponsorBtn','wizard','wizMic','wizNext','wizBack',
       'wizSkip','wizCable','wizVoices','qualityChk','sbPads','sbAdd','sbStopAll',
-      's_sbVol','sbDuck'];
+      's_sbVol','sbDuck','rvcImportBtn','rvcDeleteBtn'];
 
   // neutralise l'auto-affichage du wizard (premier lancement) pour la suite
   closeWizard();

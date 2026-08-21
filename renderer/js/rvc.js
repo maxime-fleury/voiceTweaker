@@ -58,6 +58,35 @@ async function initRvc() {
     refreshRvcStatus();
   });
 
+  $('rvcImportBtn').addEventListener('click', async () => {
+    $('rvcImportBtn').disabled = true;
+    try {
+      const res = await window.vt.rvc.import();
+      if (res.added && res.added.length) {
+        toast(t('rvc.toastImported') + ' ' + res.added.map((m) => m.id).join(', '));
+        await refreshRvcStatus();
+      }
+    } catch (err) {
+      toast(t('rvc.toastLoadFail') + ' : ' + err.message);
+    }
+    $('rvcImportBtn').disabled = false;
+  });
+
+  $('rvcDeleteBtn').addEventListener('click', async () => {
+    const id = $('rvcVoice').value;
+    if (!id) {
+      toast(t('rvc.toastNoVoice'));
+      return;
+    }
+    try {
+      await window.vt.rvc.remove(id);
+      toast(t('rvc.toastDeleted') + ' « ' + id + ' »');
+    } catch (err) {
+      toast(t('rvc.toastLoadFail') + ' : ' + err.message);
+    }
+    refreshRvcStatus();
+  });
+
   $('rvcEnable').addEventListener('change', (e) => {
     rvc.enabled = e.target.checked;
     if (rvc.enabled && !rvc.loaded) {

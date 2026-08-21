@@ -6,7 +6,9 @@ contextBridge.exposeInMainWorld('vt', {
   rvc: {
     status: () => ipcRenderer.invoke('rvc:status'),
     load: (id) => ipcRenderer.invoke('rvc:load', id),
-    convert: (buf) => ipcRenderer.invoke('rvc:convert', buf),
+    remove: (id) => ipcRenderer.invoke('rvc:remove', id),
+    import: () => ipcRenderer.invoke('rvc:import'),
+    convert: (buf, transpose) => ipcRenderer.invoke('rvc:convert', buf, transpose),
     addUrl: (name, url) => ipcRenderer.invoke('rvc:addUrl', name, url),
     openFolder: () => ipcRenderer.invoke('rvc:openFolder'),
   },

@@ -63,15 +63,32 @@ function wrap(fn) {
 
 ipcMain.handle('rvc:status', () => rvc.status());
 ipcMain.handle('rvc:load', wrap((id) => rvc.load(id)));
-ipcMain.handle('rvc:convert', async (_e, buf) => {
+ipcMain.handle('rvc:remove', wrap((_e, id) => rvc.removeModel(id)));
+ipcMain.handle('rvc:convert', async (_e, buf, transpose) => {
   try {
-    const audio = await rvc.convert(buf);
+    const audio = await rvc.convert(buf, typeof transpose === 'number' ? transpose : 0);
     return { ok: true, audio };
   } catch (err) {
     return { ok: false, error: String((err && err.message) || err) };
   }
 });
 ipcMain.handle('rvc:addUrl', wrap((_e, name, url) => rvc.addUrl(name, url)));
+ipcMain.handle('rvc:import', wrap(async () => {
+  const win = BrowserWindow.getAllWindows()[0];
+  const res = await dialog.showOpenDialog(win, {
+    title: 'Importer un modèle RVC (.onnx)',
+    filters: [{ name: 'ONNX', extensions: ['onnx'] }],
+    properties: ['openFile', 'multiSelections'],
+  });
+  if (res.canceled) return { added: [] };
+  const added = [];
+  for (const p of res.filePaths) {
+    try {
+      added.push(rvc.addLocalModel(p));
+    } catch (e) {}
+  }
+  return { added };
+}));
 ipcMain.handle('rvc:openFolder', () => rvc.openFolder());
 ipcMain.handle('logs:open', () => (logDir ? shell.openPath(logDir) : 'logs indisponibles'));
 ipcMain.handle('app:info', () => ({ version: app.getVersion(), platform: process.platform }));

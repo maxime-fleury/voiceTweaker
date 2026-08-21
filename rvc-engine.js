@@ -129,7 +129,33 @@ class RvcEngine {
     return { ok: true, inputs: this.genSess.inputNames, outputs: this.genSess.outputNames };
   }
 
-  async convert(f32) {
+  async removeModel(voiceId) {
+    const safe = String(voiceId);
+    if (!/^[a-z0-9_-]+$/i.test(safe) || safe === 'hubert') {
+      throw new Error('identifiant de voix invalide');
+    }
+    if (this.voiceId === safe) {
+      if (this.genSess) await this.genSess.release();
+      this.genSess = null;
+      this.voiceId = null;
+    }
+    fs.rmSync(path.join(this.root, safe), { recursive: true, force: true });
+    return { removed: safe };
+  }
+
+  addLocalModel(srcPath) {
+    let name = path.basename(srcPath, path.extname(srcPath))
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '_')
+      .slice(0, 40);
+    if (!name || name === 'hubert') name = 'voix_' + Date.now().toString(36);
+    const dir = path.join(this.root, name);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.copyFileSync(srcPath, path.join(dir, 'model.onnx'));
+    return { id: name };
+  }
+
+  async convert(f32, transpose = 0) {
     if (!this.hubertSess || !this.genSess) return f32;
     const SR = 48000, SRH = 16000;
     const x16 = resampleLinear(f32, SR, SRH);
@@ -145,7 +171,8 @@ class RvcEngine {
     else throw new Error('Sortie HuBERT inattendue : ' + JSON.stringify(dims));
     if (D !== 256) throw new Error(`Dim HuBERT ${D} != 256 : export ONNX incompatible avec RVC`);
 
-    const f0 = yinF0Series(f32, SR, T);
+    const trMul = Math.pow(2, Math.max(-24, Math.min(24, transpose)) / 12);
+    const f0 = yinF0Series(f32, SR, T).map((v) => (v > 0 ? v * trMul : v));
     const coarse = f0.map(f0ToCoarse);
     const pitchf = Float32Array.from(f0);
     const phone = feats instanceof Float32Array ? feats : Float32Array.from(feats);

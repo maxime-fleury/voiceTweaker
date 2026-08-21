@@ -208,6 +208,11 @@ const I18N_DICT = {
     'rvc.toastAdded': 'Voix « ',
     'rvc.toastAddedEnd': ' » ajoutée.',
     'rvc.toastDlFailed': 'Téléchargement échoué',
+    'rvc.manage': 'Gestion',
+    'rvc.import': 'Importer un .onnx…',
+    'rvc.delete': 'Supprimer la voix',
+    'rvc.toastImported': 'Modèle(s) importé(s) :',
+    'rvc.toastDeleted': 'Voix supprimée :',
   },
 
   en: {
@@ -414,6 +419,11 @@ const I18N_DICT = {
     'rvc.toastAdded': 'Voice “',
     'rvc.toastAddedEnd': '” added.',
     'rvc.toastDlFailed': 'Download failed',
+    'rvc.manage': 'Manage',
+    'rvc.import': 'Import a .onnx…',
+    'rvc.delete': 'Delete voice',
+    'rvc.toastImported': 'Model(s) imported:',
+    'rvc.toastDeleted': 'Voice deleted:',
   },
 };
 
