@@ -3,7 +3,7 @@ class VoiceProcessor extends AudioWorkletProcessor {
     return [];
   }
 
-  constructor() {
+  constructor(options) {
     super();
     const TAPS = 4;
     this.taps = TAPS;
@@ -41,6 +41,12 @@ class VoiceProcessor extends AudioWorkletProcessor {
       breath: 0,
       transients: 0,
     };
+    const po = options && options.processorOptions;
+    if (po) {
+      for (const k of Object.keys(this.p)) {
+        if (typeof po[k] === 'number') this.p[k] = po[k];
+      }
+    }
     this.port.onmessage = (e) => {
       if (e.data) Object.assign(this.p, e.data);
     };

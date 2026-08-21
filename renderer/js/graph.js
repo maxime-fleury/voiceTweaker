@@ -24,6 +24,18 @@ function buildGraph() {
     numberOfInputs: 1,
     numberOfOutputs: 1,
     outputChannelCount: [1],
+    processorOptions: {
+      pitch: params.pitch,
+      grain: params.grain,
+      gateDb: params.gate,
+      ring: params.ring / 100,
+      ringFreq: params.ringFreq,
+      vibrDepth: params.vibrDepth,
+      vibrRate: params.vibrRate,
+      humanize: params.humanize,
+      breath: params.breath,
+      transients: params.transients,
+    },
   });
   worklet.port.onmessage = (e) => {
     if (e.data && e.data.type === 'meter') state.level = e.data.rms;
@@ -33,6 +45,7 @@ function buildGraph() {
     numberOfInputs: 1,
     numberOfOutputs: 1,
     outputChannelCount: [1],
+    processorOptions: { alpha: Math.pow(2, (params.formant * 4) / 1200) },
   });
 
   const tap = new AudioWorkletNode(ctx, 'stream-tap', {

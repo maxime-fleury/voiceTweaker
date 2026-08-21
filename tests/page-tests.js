@@ -161,6 +161,8 @@ module.exports = `(async () => {
       await c.audioWorklet.addModule(new URL('./worklets/voice-worklet.js', location.href));
       const node = new AudioWorkletNode(c, 'voice-processor', {
         numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { pitch: pitch, grain: 85, gateDb: -100, ring: 0, ringFreq: 50,
+          vibrDepth: 0, vibrRate: 5, humanize: 0, breath: 0, transients: 55 },
       });
       node.port.postMessage({ pitch: pitch, grain: 85, gateDb: -100, ring: 0, ringFreq: 50,
         vibrDepth: 0, vibrRate: 5, humanize: 0, breath: 0, transients: 55 });
@@ -184,7 +186,9 @@ module.exports = `(async () => {
   await test('worklet: formant alpha 1.12 rendu connu', async () => {
     const c = new OfflineAudioContext(1, 8192, 48000);
     await c.audioWorklet.addModule(new URL('./worklets/formant-worklet.js', location.href));
-    const fp = new AudioWorkletNode(c, 'formant-processor');
+    const fp = new AudioWorkletNode(c, 'formant-processor', {
+      processorOptions: { alpha: 1.12 },
+    });
     fp.port.postMessage({ alpha: 1.12 });
     const osc = c.createOscillator();
     osc.frequency.value = 220;

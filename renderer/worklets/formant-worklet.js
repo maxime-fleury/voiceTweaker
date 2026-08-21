@@ -61,7 +61,7 @@ class FormantProcessor extends AudioWorkletProcessor {
     return [];
   }
 
-  constructor() {
+  constructor(options) {
     super();
     this.fft = new FFT(N);
     this.win = new Float32Array(N);
@@ -86,6 +86,8 @@ class FormantProcessor extends AudioWorkletProcessor {
     this.envLog = new Float32Array(N);
 
     this.alpha = 1;
+    const po = options && options.processorOptions;
+    if (po && typeof po.alpha === 'number') this.alpha = po.alpha;
     this.port.onmessage = (e) => {
       if (e.data && typeof e.data.alpha === 'number') this.alpha = e.data.alpha;
     };

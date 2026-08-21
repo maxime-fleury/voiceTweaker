@@ -88,7 +88,9 @@ app.whenReady().then(() => {
               await ctx.audioWorklet.addModule(new URL('./worklets/' + f, location.href));
               out.push(f + ':loaded');
             }
-            const fp = new AudioWorkletNode(ctx, 'formant-processor');
+            const fp = new AudioWorkletNode(ctx, 'formant-processor', {
+              processorOptions: { alpha: 1.12 },
+            });
             fp.port.postMessage({ alpha: 1.12 });
             const osc = ctx.createOscillator();
             osc.frequency.value = 220;
