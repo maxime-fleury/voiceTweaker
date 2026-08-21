@@ -29,6 +29,13 @@ class VoiceProcessor extends AudioWorkletProcessor {
     this.meterCount = 0;
     this.meterAcc = 0;
 
+    // look-ahead du gate (~3 ms) pour ne pas rogner l'attaque des consonnes
+    this.laLen = Math.max(1, Math.round(sampleRate * 0.003));
+    this.laBuf = new Float32Array(this.laLen);
+    this.laPos = 0;
+    this.gateOpen = false;
+    this.holdCount = 0;
+
     this.p = {
       pitch: 0,
       grain: 85,
@@ -88,6 +95,8 @@ class VoiceProcessor extends AudioWorkletProcessor {
     const breathAmt = Math.min(1, Math.max(0, this.p.breath)) / 100;
 
     const thr = Math.pow(10, this.p.gateDb / 20);
+    const closeThr = thr * 0.5;
+    const holdN = Math.round(sr * 0.08);
     const relCo = Math.exp(-1 / (sr * 0.06));
     const gateSmooth = 1 - Math.exp(-1 / (sr * 0.004));
 
@@ -104,6 +113,7 @@ class VoiceProcessor extends AudioWorkletProcessor {
 
     let ratio = baseRatio;
     let acc = 0;
+    let prevTrig = false;
 
     for (let i = 0; i < out.length; i++) {
       if ((i & 31) === 0) {
@@ -122,21 +132,43 @@ class VoiceProcessor extends AudioWorkletProcessor {
 
       let x = inp[i];
 
+      // look-ahead : le gain du gate s'applique à x retardé de ~3 ms
+      const xLa = this.laBuf[this.laPos];
+      this.laBuf[this.laPos] = x;
+      this.laPos = (this.laPos + 1) % this.laLen;
+
       const ax = x < 0 ? -x : x;
       this.env = ax > this.env ? ax : this.env * relCo;
-      const target = this.env > thr ? 1 : 0;
-      this.gateGain += (target - this.gateGain) * gateSmooth;
-      x *= this.gateGain;
+      if (!this.gateOpen) {
+        if (this.env > thr) {
+          this.gateOpen = true;
+          this.holdCount = 0;
+        }
+      } else if (this.env < closeThr) {
+        this.holdCount++;
+        if (this.holdCount > holdN) this.gateOpen = false;
+      } else {
+        this.holdCount = 0;
+      }
+      const gateTarget = this.gateOpen ? 1 : 0;
+      this.gateGain += (gateTarget - this.gateGain) * gateSmooth;
+      x = xLa * this.gateGain;
 
       if (tAmt > 0) {
         this.fastEnv = ax > this.fastEnv ? ax : this.fastEnv * fRel;
         this.slowEnv += (ax - this.slowEnv) * sCo;
         const trig = this.fastEnv > this.slowEnv * trThresh && this.fastEnv > 1e-4;
+        if (trig && !prevTrig && !bypass) {
+          // onset : réaligne les grains pour ne pas chevaucher l'attaque
+          for (let t = 0; t < this.taps; t++) this.phases[t] = t / this.taps;
+        }
+        prevTrig = trig;
         const tTarget = trig ? 0 : 1;
         const co = tTarget < this.trScale ? trAtt : trRel;
         this.trScale += (tTarget - this.trScale) * co;
       } else {
         this.trScale = 1;
+        prevTrig = false;
       }
 
       this.buf[this.w] = x;
