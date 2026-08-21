@@ -1,6 +1,7 @@
 const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 const { RvcEngine } = require('./rvc-engine');
 
 const SMOKE = !!process.env.VT_SMOKE;
@@ -65,6 +66,28 @@ ipcMain.handle('rvc:convert', async (_e, buf) => {
 ipcMain.handle('rvc:addUrl', wrap((_e, name, url) => rvc.addUrl(name, url)));
 ipcMain.handle('rvc:openFolder', () => rvc.openFolder());
 ipcMain.handle('logs:open', () => (logDir ? shell.openPath(logDir) : 'logs indisponibles'));
+ipcMain.handle('updater:check', () => {
+  if (!app.isPackaged || SMOKE || E2E) return { ok: false, error: 'indisponible en dev' };
+  autoUpdater.checkForUpdates().catch((err) => logLine('[updater] check failed: ' + err.message));
+  return { ok: true };
+});
+
+function setupAutoUpdater(win) {
+  if (!app.isPackaged || SMOKE || E2E) return;
+  autoUpdater.autoInstallOnAppQuit = true;
+  const send = (type, info) => {
+    try { win.webContents.send('updater', { type, info }); } catch (e) {}
+  };
+  autoUpdater.on('update-available', (i) => send('available', i && i.version));
+  autoUpdater.on('update-not-available', () => send('none', ''));
+  autoUpdater.on('download-progress', (p) => send('progress', Math.round(p.percent)));
+  autoUpdater.on('update-downloaded', (i) => {
+    logLine('[updater] downloaded ' + (i && i.version));
+    send('downloaded', i && i.version);
+  });
+  autoUpdater.on('error', (err) => logLine('[updater] error: ' + err.message));
+  autoUpdater.checkForUpdates().catch((err) => logLine('[updater] check failed: ' + err.message));
+}
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -109,6 +132,7 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionCheckHandler((_wc, permission) => permission === 'media');
 
   const win = createWindow();
+  setupAutoUpdater(win);
 
   if (SMOKE) {
     win.webContents.on('did-finish-load', async () => {

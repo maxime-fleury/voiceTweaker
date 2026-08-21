@@ -164,6 +164,13 @@ function init() {
 
   navigator.mediaDevices.addEventListener?.('devicechange', listDevices);
 
+  window.vt.updater?.onUpdate(({ type, info }) => {
+    if (type === 'available') toast('Mise à jour ' + info + ' disponible — téléchargement…');
+    else if (type === 'downloaded') {
+      toast('Mise à jour ' + info + ' prête — elle s\'installera à la fermeture de l\'app.');
+    }
+  });
+
   initRvc();
 
   listDevices().then(() => {

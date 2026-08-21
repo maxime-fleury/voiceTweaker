@@ -11,4 +11,8 @@ contextBridge.exposeInMainWorld('vt', {
     openFolder: () => ipcRenderer.invoke('rvc:openFolder'),
   },
   openLogs: () => ipcRenderer.invoke('logs:open'),
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
+    onUpdate: (cb) => ipcRenderer.on('updater', (_e, payload) => cb(payload)),
+  },
 });
