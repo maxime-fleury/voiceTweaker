@@ -1,6 +1,19 @@
 # VoiceTweaker
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/maxime-fleury/voiceTweaker/actions/workflows/ci.yml/badge.svg)](https://github.com/maxime-fleury/voiceTweaker/actions/workflows/ci.yml)
+
 Voice changer temps réel pour Windows : pitch + **formants STFT**, transitoires préservés, réverbes réalistes (IR procédurales ou .wav perso), effets, et **conversion neuronale RVC** expérimentale. Sortie vers n'importe quel périphérique, y compris un micro virtuel (VB-CABLE) pour Discord / OBS / jeux.
+
+**100 % local, sans compte, sans télémétrie.** Si le projet te plaît, [soutiens-le sur GitHub Sponsors](https://github.com/sponsors/maxime-fleury) 💜
+
+## Télécharger
+
+Récupère le dernier installeur (`VoiceTweaker-Setup-x.y.z.exe`) dans les
+[Releases](https://github.com/maxime-fleury/voiceTweaker/releases). L'installeur
+n'est pas signé : Windows SmartScreen peut afficher un avertissement au premier
+lancement — clique **Informations supplémentaires → Exécuter quand même**.
+Les mises à jour sont automatiques (vérification d'intégrité SHA512).
 
 ## Lancer
 
