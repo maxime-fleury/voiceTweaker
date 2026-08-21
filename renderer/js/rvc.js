@@ -18,7 +18,8 @@ async function refreshRvcStatus() {
     el.textContent = t('rvc.noVoices');
     el.className = 'rvc-status warn';
   } else if (s.loaded) {
-    el.textContent = t('rvc.loaded') + s.loaded + t('rvc.loadedEnd');
+    const suffix = s.gpu ? ' · GPU' : ' · CPU';
+    el.textContent = t('rvc.loaded') + s.loaded + t('rvc.loadedEnd') + suffix;
     el.className = 'rvc-status ok';
   } else {
     el.textContent = s.voices.length + t('rvc.available');

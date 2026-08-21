@@ -91,6 +91,23 @@ class RvcEngine {
     this.hubertSess = null;
     this.genSess = null;
     this.voiceId = null;
+    this.ep = null;
+  }
+
+  async createSession(p) {
+    // Windows : tente DirectML (GPU) puis retombe sur CPU
+    const eps = process.platform === 'win32' ? [['dml'], ['cpu']] : [['cpu']];
+    let lastErr = null;
+    for (const ep of eps) {
+      try {
+        const sess = await OT.InferenceSession.create(p, { executionProviders: ep });
+        this.ep = ep[0];
+        return sess;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('création de session impossible');
   }
 
   status() {
@@ -108,6 +125,8 @@ class RvcEngine {
       voices,
       loaded: this.voiceId,
       modelsRoot: this.root,
+      ep: this.ep,
+      gpu: this.ep === 'dml',
     };
   }
 
@@ -116,7 +135,7 @@ class RvcEngine {
     if (!this.hubertSess) {
       const hp = path.join(this.root, 'hubert', 'hubert.onnx');
       if (!fs.existsSync(hp)) throw new Error('models/hubert/hubert.onnx introuvable');
-      this.hubertSess = await OT.InferenceSession.create(hp, { executionProviders: ['cpu'] });
+      this.hubertSess = await this.createSession(hp);
     }
     const vp = path.join(this.root, voiceId, 'model.onnx');
     if (!fs.existsSync(vp)) throw new Error(`Modèle introuvable : ${vp}`);
@@ -124,9 +143,9 @@ class RvcEngine {
       if (this.genSess) await this.genSess.release();
       this.genSess = null;
     }
-    this.genSess = await OT.InferenceSession.create(vp, { executionProviders: ['cpu'] });
+    this.genSess = await this.createSession(vp);
     this.voiceId = voiceId;
-    return { ok: true, inputs: this.genSess.inputNames, outputs: this.genSess.outputNames };
+    return { ok: true, ep: this.ep, inputs: this.genSess.inputNames, outputs: this.genSess.outputNames };
   }
 
   async removeModel(voiceId) {
@@ -169,7 +188,9 @@ class RvcEngine {
     if (dims.length === 3) { T = dims[1]; D = dims[2]; feats = hT.data; }
     else if (dims.length === 2) { T = dims[0]; D = dims[1]; feats = hT.data; }
     else throw new Error('Sortie HuBERT inattendue : ' + JSON.stringify(dims));
-    if (D !== 256) throw new Error(`Dim HuBERT ${D} != 256 : export ONNX incompatible avec RVC`);
+    if (D !== 256 && D !== 768) {
+      throw new Error(`Dim features ${D} non supportée (attendu 256 HuBERT ou 768 ContentVec)`);
+    }
 
     const trMul = Math.pow(2, Math.max(-24, Math.min(24, transpose)) / 12);
     const f0 = yinF0Series(f32, SR, T).map((v) => (v > 0 ? v * trMul : v));
