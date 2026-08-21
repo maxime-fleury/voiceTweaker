@@ -189,30 +189,38 @@ class RvcEngine {
     throw new Error('Inférence RVC échouée : ' + (lastErr && lastErr.message));
   }
 
-  async addUrl(name, url) {
+  async addUrl(name, url, depth = 0) {
     const safe = String(name).toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 40);
     if (!safe) throw new Error('Nom invalide');
     const dir = path.join(this.root, safe);
     fs.mkdirSync(dir, { recursive: true });
     const dest = path.join(dir, 'model.onnx');
+    const cleanup = () => {
+      try { fs.unlinkSync(dest); } catch (e) {}
+    };
     await new Promise((resolve, reject) => {
       const request = net.request(url);
       request.on('response', (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           request.abort();
-          this.addUrl(name, res.headers.location).then(resolve, reject);
+          if (depth >= 5) {
+            reject(new Error('Trop de redirections'));
+            return;
+          }
+          this.addUrl(name, res.headers.location, depth + 1).then(resolve, reject);
           return;
         }
         if (res.statusCode !== 200) {
+          cleanup();
           reject(new Error('HTTP ' + res.statusCode));
           return;
         }
         const file = fs.createWriteStream(dest);
         res.on('data', (chunk) => file.write(chunk));
         res.on('end', () => { file.end(); resolve(); });
-        res.on('error', reject);
+        res.on('error', () => { cleanup(); reject(new Error('Téléchargement interrompu')); });
       });
-      request.on('error', reject);
+      request.on('error', (err) => { cleanup(); reject(err); });
       request.end();
     });
     return { ok: true, id: safe };
