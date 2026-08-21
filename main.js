@@ -154,3 +154,8 @@ process.on('uncaughtException', (err) => {
   console.error('[main] uncaught:', err);
   if (SMOKE || E2E) process.exit(1);
 });
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[main] unhandled rejection:', reason);
+  if (SMOKE || E2E) process.exit(1);
+});

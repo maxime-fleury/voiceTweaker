@@ -140,7 +140,12 @@ function init() {
   $('irFileBtn').addEventListener('click', () => $('irFile').click());
   $('irFile').addEventListener('change', async (e) => {
     const file = e.target.files[0];
-    if (!file || !state.ctx) return;
+    if (!file) return;
+    if (!state.ctx) {
+      toast('Démarre le traitement avant de charger une IR.');
+      e.target.value = '';
+      return;
+    }
     try {
       const data = await file.arrayBuffer();
       state.customIr = await state.ctx.decodeAudioData(data);
