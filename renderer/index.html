@@ -175,6 +175,39 @@
   </footer>
 
   <div id="toast"></div>
+
+  <div id="wizard" class="wizard-overlay hidden">
+    <div class="wizard-card">
+      <div class="wizard-dots"><i class="on"></i><i></i><i></i></div>
+      <section class="wpanel active" id="wp1">
+        <h3 data-i18n="wiz.t1">Bienvenue dans VoiceTweaker</h3>
+        <p class="hint" data-i18n="wiz.p1">Trois étapes rapides : ton micro, un micro virtuel optionnel, et une voix de départ.</p>
+        <label for="wizMic" data-i18n="label.mic">Microphone (entrée)</label>
+        <select id="wizMic"></select>
+      </section>
+      <section class="wpanel" id="wp2">
+        <h3 data-i18n="wiz.t2">Micro virtuel (optionnel)</h3>
+        <p class="hint" data-i18n="wiz.p2">Pour utiliser ta voix transformée dans Discord, OBS ou tes jeux, il faut un câble audio virtuel.</p>
+        <div id="wizCable" class="cable-state">…</div>
+        <div class="btn-row">
+          <button id="wizCableOpen" class="small ghost" data-i18n="wiz.cableOpen">Ouvrir la page VB-CABLE</button>
+          <button id="wizCableRetry" class="small ghost" data-i18n="wiz.retry">Revérifier</button>
+        </div>
+      </section>
+      <section class="wpanel" id="wp3">
+        <h3 data-i18n="wiz.t3">Choisis une voix de départ</h3>
+        <p class="hint" data-i18n="wiz.p3">Tout se règle finement ensuite dans les onglets Voix et Effets.</p>
+        <div class="chips" id="wizVoices"></div>
+      </section>
+      <div class="wizard-nav">
+        <button id="wizSkip" class="small ghost" data-i18n="wiz.skip">Passer</button>
+        <div class="spacer"></div>
+        <button id="wizBack" class="small ghost" data-i18n="wiz.back">Retour</button>
+        <button id="wizNext" class="small" data-i18n="wiz.next">Suivant</button>
+      </div>
+    </div>
+  </div>
+
   <audio id="outAudio" autoplay></audio>
   <script src="reverb-irs.js"></script>
   <script src="js/i18n.js"></script>
@@ -183,6 +216,7 @@
   <script src="js/graph.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/rvc.js"></script>
+  <script src="js/wizard.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -156,6 +156,8 @@ function init() {
     window.vt.openUrl('https://github.com/sponsors/maxime-fleury');
   });
 
+  initWizard(saved);
+
   $('langSelect').addEventListener('change', (e) => setLang(e.target.value));
 
   onLangChange(() => {

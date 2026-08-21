@@ -503,6 +503,58 @@ body.running button.primary.stop {
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ---------- Wizard ---------- */
+
+.wizard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 14, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.wizard-overlay.hidden { display: none; }
+
+.wizard-card {
+  width: min(560px, 92vw);
+  background: linear-gradient(180deg, var(--card), var(--card2));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: fadeUp 0.3s ease;
+}
+
+.wizard-dots { display: flex; gap: 6px; margin-bottom: 16px; }
+.wizard-dots i {
+  width: 26px;
+  height: 4px;
+  border-radius: 2px;
+  background: #232b3d;
+  transition: background 0.2s ease;
+}
+.wizard-dots i.on { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+.wpanel { display: none; }
+.wpanel.active { display: block; animation: fadeUp 0.25s ease; }
+.wpanel h3 { margin: 0 0 8px; font-size: 17px; }
+
+.cable-state {
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: #0d1220;
+  font-size: 13px;
+  margin: 10px 0;
+}
+.cable-state.ok { border-color: rgba(61, 220, 132, 0.45); color: var(--green); }
+.cable-state.warn { border-color: rgba(255, 209, 102, 0.4); color: #ffd166; }
+
+.wizard-nav { display: flex; gap: 8px; margin-top: 18px; align-items: center; }
+.wizard-nav .spacer { flex: 1; }
+
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {

@@ -33,7 +33,11 @@ module.exports = `(async () => {
       'presets','customName','saveCustomBtn','irFileBtn','irFile','rvcStatus','rvcVoice',
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
       'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect',
-      'resetBtn','appVersion','ghBtn','sponsorBtn'];
+      'resetBtn','appVersion','ghBtn','sponsorBtn','wizard','wizMic','wizNext','wizBack',
+      'wizSkip','wizCable','wizVoices'];
+
+  // neutralise l'auto-affichage du wizard (premier lancement) pour la suite
+  closeWizard();
     for (const id of ids) assert($(id), 'id manquant: ' + id);
     return ids.length + ' ids';
   });
@@ -304,6 +308,29 @@ module.exports = `(async () => {
     document.querySelector('.tab[data-tab="voix"]').click();
     assert(document.getElementById('panel-voix').classList.contains('active'), 'retour voix ko');
     return 'ok';
+  });
+
+  await test('wizard: flux complet', async () => {
+    const ov = $('wizard');
+    assert(ov.classList.contains('hidden'), 'wizard deja visible avant test');
+    showWizard();
+    assert(!ov.classList.contains('hidden'), 'wizard ne saffiche pas');
+    assert(document.getElementById('wp1').classList.contains('active'), 'etape 1 inactive');
+    $('wizNext').click();
+    await sleep(150);
+    assert(document.getElementById('wp2').classList.contains('active'), 'etape 2 inactive');
+    const cableTxt = $('wizCable').textContent;
+    assert(cableTxt.length > 0, 'etat cable vide');
+    $('wizNext').click();
+    assert(document.getElementById('wp3').classList.contains('active'), 'etape 3 inactive');
+    document.querySelector('#wizVoices .chip[data-key="feminin"]').click();
+    assert(Math.abs(params.pitch - 3.4) < 0.01, 'preset wizard non applique');
+    $('wizNext').click();
+    assert(ov.classList.contains('hidden'), 'wizard non ferme');
+    const meta = JSON.parse(localStorage.getItem('vt_settings'));
+    assert(meta.wizardDone === true, 'wizardDone non persiste');
+    clickChip('naturel');
+    return 'cable=' + cableTxt.slice(0, 30);
   });
 
   await test('i18n: bascule FR vers EN puis retour', () => {
