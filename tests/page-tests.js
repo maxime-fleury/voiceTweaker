@@ -208,6 +208,49 @@ module.exports = `(async () => {
     return 'hubert=' + s.hubertOk;
   });
 
+  await test('ns: RNNoise attenue fortement le bruit', async () => {
+    const res = await fetch(new URL('./vendor/ns/rnnoise_simd.wasm', location.href));
+    const bytes = await res.arrayBuffer();
+    assert(bytes.byteLength > 100000, 'wasm trop petit');
+    async function render(enabled) {
+      const c = new OfflineAudioContext(1, 48000, 48000);
+      await c.audioWorklet.addModule(
+        new URL('./vendor/ns/rnnoise-worklet.js', location.href)
+      );
+      const node = new AudioWorkletNode(c, '@sapphi-red/web-noise-suppressor/rnnoise', {
+        numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+        processorOptions: { maxChannels: 1, wasmBinary: bytes.slice(0) },
+      });
+      const buf = c.createBuffer(1, 48000, 48000);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.1;
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      if (enabled) {
+        src.connect(node);
+        node.connect(c.destination);
+      } else {
+        src.connect(c.destination);
+      }
+      src.start();
+      return c.startRendering();
+    }
+    const off = await render(false);
+    const on = await render(true);
+    function rmsWindow(b) {
+      let a = 0;
+      const ch = b.getChannelData(0);
+      const start = 9600;
+      for (let i = start; i < ch.length; i++) a += ch[i] * ch[i];
+      return Math.sqrt(a / (ch.length - start));
+    }
+    const rOff = rmsWindow(off);
+    const rOn = rmsWindow(on);
+    assert(rOff > 0.05, 'bypass rms=' + rOff.toFixed(4));
+    assert(rOn < rOff * 0.7, 'attenuation insuffisante on=' + rOn.toFixed(4) + ' off=' + rOff.toFixed(4));
+    return 'off=' + rOff.toFixed(3) + ' on=' + rOn.toFixed(3);
+  });
+
   await test('presets: sequence rapide sans erreur', () => {
     clickChip('telephone');
     assert(params.low === -18 && params.high === -14, 'eq tel=' + params.low + '/' + params.high);

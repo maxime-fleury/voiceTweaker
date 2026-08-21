@@ -41,6 +41,8 @@ function saveSettingsNow() {
   for (const s of SLIDERS) meta.params[s.id] = params[s.id];
   meta.params.low = typeof params.low === 'number' ? params.low : null;
   meta.params.high = typeof params.high === 'number' ? params.high : null;
+  meta.params.nsEnabled = !!params.nsEnabled;
+  meta.params.nsStrength = params.nsStrength;
   localStorage.setItem('vt_settings', JSON.stringify(meta));
 }
 
@@ -63,6 +65,10 @@ function loadSettings() {
     for (const k of ['low', 'high']) {
       const v = saved.params[k];
       if (v === null || (typeof v === 'number' && isFinite(v))) params[k] = v;
+    }
+    if (typeof saved.params.nsEnabled === 'boolean') params.nsEnabled = saved.params.nsEnabled;
+    if (typeof saved.params.nsStrength === 'number' && isFinite(saved.params.nsStrength)) {
+      params.nsStrength = Math.min(100, Math.max(0, saved.params.nsStrength));
     }
   }
   if (typeof saved.chunkMs === 'number') rvc.chunkMs = saved.chunkMs;

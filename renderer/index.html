@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'" />
   <title>VoiceTweaker</title>
   <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="style.css" />
@@ -30,6 +30,15 @@
         <input type="checkbox" id="monitorChk" />
         <span data-i18n="label.monitor">S'entendre (test de voix)</span>
       </label>
+      <label class="check">
+        <input type="checkbox" id="nsEnable" checked />
+        <span data-i18n="label.ns">Réduction de bruit (RNNoise)</span>
+      </label>
+      <div class="row">
+        <span class="lbl" data-i18n="slider.nsStrength" title="">Force NS</span>
+        <input type="range" id="s_nsStrength" min="0" max="100" step="1" value="60" />
+        <span class="val" id="v_nsStrength">60 %</span>
+      </div>
       <p class="hint" data-i18n-html="hint.vbcable">
         Pour un micro virtuel dans Discord / OBS / jeux : installez
         <b>VB-CABLE</b> (gratuit), choisissez <b>CABLE Input</b> comme sortie ici,

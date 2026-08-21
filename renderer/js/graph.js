@@ -20,6 +20,19 @@ function buildGraph() {
   const ctx = state.ctx;
   const source = ctx.createMediaStreamSource(state.stream);
 
+  // RNNoise (vendor sapphi-red/web-noise-suppressor, 48 kHz) + blend wet/dry.
+  const ns = new AudioWorkletNode(ctx, '@sapphi-red/web-noise-suppressor/rnnoise', {
+    numberOfInputs: 1,
+    numberOfOutputs: 1,
+    outputChannelCount: [1],
+    processorOptions: { maxChannels: 1, wasmBinary: state.nsWasmBytes },
+  });
+  const nsWet = ctx.createGain();
+  const nsDry = ctx.createGain();
+  nsWet.gain.value = params.nsEnabled ? params.nsStrength / 100 : 0;
+  nsDry.gain.value = params.nsEnabled ? 1 - params.nsStrength / 100 : 1;
+  const nsSum = ctx.createGain();
+
   const worklet = new AudioWorkletNode(ctx, 'voice-processor', {
     numberOfInputs: 1,
     numberOfOutputs: 1,
@@ -115,7 +128,12 @@ function buildGraph() {
 
   const msDest = ctx.createMediaStreamDestination();
 
-  source.connect(worklet);
+  source.connect(ns);
+  ns.connect(nsWet);
+  nsWet.connect(nsSum);
+  source.connect(nsDry);
+  nsDry.connect(nsSum);
+  nsSum.connect(worklet);
   worklet.connect(formant);
   formant.connect(peak);
   peak.connect(low);
@@ -143,6 +161,9 @@ function buildGraph() {
 
   state.worklet = worklet;
   state.formant = formant;
+  state.ns = ns;
+  state.nsWet = nsWet;
+  state.nsDry = nsDry;
   state.tap = tap;
   state.player = player;
   state.msDest = msDest;
@@ -184,6 +205,16 @@ async function sendRvcChunk(chunk) {
 }
 
 function applyParams() {
+  if (state.nsWet) {
+    const on = !!params.nsEnabled;
+    const s = params.nsStrength / 100;
+    const t = state.ctx ? state.ctx.currentTime : 0;
+    for (const [g, target] of [[state.nsWet, on ? s : 0], [state.nsDry, on ? 1 - s : 1]]) {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(g.gain.value, t);
+      g.gain.linearRampToValueAtTime(target, t + 0.05);
+    }
+  }
   if (state.worklet) {
     state.worklet.port.postMessage({
       pitch: params.pitch,

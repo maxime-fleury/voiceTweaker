@@ -14,7 +14,20 @@ async function start() {
     };
     state.stream = await navigator.mediaDevices.getUserMedia(constraints);
 
+    if (!state.nsWasmBytes) {
+      const simdOk = WebAssembly.validate(new Uint8Array([
+        0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0,
+        10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11,
+      ]));
+      const url = simdOk ? './vendor/ns/rnnoise_simd.wasm' : './vendor/ns/rnnoise.wasm';
+      const res = await fetch(new URL(url, location.href));
+      state.nsWasmBytes = await res.arrayBuffer();
+    }
+
     state.ctx = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
+    await state.ctx.audioWorklet.addModule(
+      new URL('./vendor/ns/rnnoise-worklet.js', location.href)
+    );
     await state.ctx.audioWorklet.addModule(new URL('./worklets/voice-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/formant-worklet.js', location.href));
     await state.ctx.audioWorklet.addModule(new URL('./worklets/stream-tap-worklet.js', location.href));
@@ -69,6 +82,9 @@ function stop() {
   }
   state.worklet = null;
   state.formant = null;
+  state.ns = null;
+  state.nsWet = null;
+  state.nsDry = null;
   state.tap = null;
   state.player = null;
   state.msDest = null;
@@ -89,6 +105,23 @@ function init() {
   renderPresets();
 
   $('monitorChk').checked = !!saved.monitor;
+
+  $('nsEnable').checked = !!params.nsEnabled;
+  $('s_nsStrength').value = String(params.nsStrength);
+  $('v_nsStrength').textContent = Math.round(params.nsStrength) + ' %';
+
+  $('nsEnable').addEventListener('change', (e) => {
+    params.nsEnabled = e.target.checked;
+    applyParams();
+    saveSettingsDebounced();
+  });
+
+  $('s_nsStrength').addEventListener('input', () => {
+    params.nsStrength = parseFloat($('s_nsStrength').value);
+    $('v_nsStrength').textContent = Math.round(params.nsStrength) + ' %';
+    applyParams();
+    saveSettingsDebounced();
+  });
 
   $('langSelect').addEventListener('change', (e) => setLang(e.target.value));
 

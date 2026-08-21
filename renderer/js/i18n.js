@@ -20,6 +20,9 @@ const I18N_DICT = {
     'label.out': 'Sortie audio',
     'label.monitor': "S'entendre (test de voix)",
     'label.lang': 'Langue',
+    'label.ns': 'Réduction de bruit (RNNoise)',
+    'slider.nsStrength': 'Force NS',
+    'tip.nsStrength': 'Mélange entre le signal débruité et le signal brut.',
 
     'hint.vbcable':
       "Pour un micro virtuel dans Discord / OBS / jeux : installez <b>VB-CABLE</b> (gratuit), choisissez <b>CABLE Input</b> comme sortie ici, puis <b>CABLE Output</b> comme microphone dans l'application cible. Utilisez un casque pour éviter le larsen.",
@@ -171,6 +174,9 @@ const I18N_DICT = {
     'label.out': 'Audio output',
     'label.monitor': 'Hear yourself (voice test)',
     'label.lang': 'Language',
+    'label.ns': 'Noise suppression (RNNoise)',
+    'slider.nsStrength': 'NS strength',
+    'tip.nsStrength': 'Blend between the denoised signal and the raw signal.',
 
     'hint.vbcable':
       'For a virtual mic in Discord / OBS / games: install <b>VB-CABLE</b> (free), pick <b>CABLE Input</b> as the output here, then <b>CABLE Output</b> as the microphone in the target app. Use headphones to avoid feedback.',

@@ -59,6 +59,10 @@ for (const s of SLIDERS) params[s.id] = s.value;
 params.low = null;
 params.high = null;
 
+// Noise suppression (RNNoise) — ON by default, moderate strength.
+params.nsEnabled = true;
+params.nsStrength = 60;
+
 const DEFAULT_PARAMS = Object.assign({}, params);
 
 const SLIDER_IDS = SLIDERS.filter((s) => s.type !== 'select').map((s) => s.id);

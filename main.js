@@ -145,6 +145,8 @@ app.whenReady().then(() => {
               await ctx.audioWorklet.addModule(new URL('./worklets/' + f, location.href));
               out.push(f + ':loaded');
             }
+            await ctx.audioWorklet.addModule(new URL('./vendor/ns/rnnoise-worklet.js', location.href));
+            out.push('rnnoise-worklet:loaded');
             const fp = new AudioWorkletNode(ctx, 'formant-processor', {
               processorOptions: { alpha: 1.12 },
             });
@@ -186,7 +188,8 @@ app.whenReady().then(() => {
         let pass = 0;
         for (const r of results) {
           if (r.pass) pass++;
-          console.log(`[e2e] ${r.pass ? 'PASS' : 'FAIL'} ${r.name}${r.pass ? '' : ' — ' + r.info}`);
+          const suffix = r.info ? ' — ' + r.info : '';
+          console.log(`[e2e] ${r.pass ? 'PASS' : 'FAIL'} ${r.name}${r.pass ? suffix : ' — ' + r.info}`);
         }
         console.log(`[e2e] SUMMARY ${pass}/${results.length}`);
         if (e2eConsoleErrors.length) {
