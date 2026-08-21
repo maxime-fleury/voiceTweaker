@@ -13,9 +13,8 @@ class ChunkPlayer extends AudioWorkletProcessor {
       const audio = e.data && e.data.audio;
       if (!(audio instanceof Float32Array)) return;
       const avail = (this.w - this.r) & this.mask;
-      if (avail + audio.length > this.cap) {
-        this.r = (this.w + audio.length) & this.mask;
-      }
+      const overflow = avail + audio.length - this.cap;
+      if (overflow > 0) this.r = (this.r + overflow) & this.mask;
       for (let i = 0; i < audio.length; i++) {
         this.buf[this.w] = audio[i];
         this.w = (this.w + 1) & this.mask;
