@@ -1,0 +1,39 @@
+{
+  "name": "voicetweaker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Voice changer temps réel : pitch, formants, effets, RVC expérimental, sortie audio sélectionnable (micro virtuel)",
+  "license": "MIT",
+  "author": "maxime-fleury",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maxime-fleury/voiceTweaker.git"
+  },
+  "keywords": [
+    "voice-changer",
+    "electron",
+    "audio",
+    "pitch-shifter",
+    "formant",
+    "rvc",
+    "real-time"
+  ],
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "icon": "node scripts/make-icon.mjs",
+    "smoke": "node scripts/smoke-runner.mjs",
+    "test:e2e": "node scripts/e2e-runner.mjs"
+  },
+  "trustedDependencies": [
+    "electron",
+    "onnxruntime-node"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest",
+    "electron": "^43.4.1"
+  },
+  "dependencies": {
+    "onnxruntime-node": "^1.27.0"
+  }
+}
