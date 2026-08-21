@@ -22,7 +22,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: E2E tests (headless Electron)
+      - name: Ensure Electron binary
+        run: node node_modules/electron/install.js
+
+      - name: E2E tests
         run: node scripts/e2e-runner.mjs
 
       - name: Smoke tests
@@ -42,7 +45,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build and publish draft release
+      - name: Ensure Electron binary
+        run: node node_modules/electron/install.js
+
+      - name: Build (unpacked)
+        run: bun run dist:dir
+
+      - name: Smoke test packaged app
+        run: node scripts/smoke-runner.mjs release/win-unpacked/VoiceTweaker.exe
+
+      - name: Build installer and publish draft release
         run: bun run dist --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
