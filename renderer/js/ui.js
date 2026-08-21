@@ -12,7 +12,9 @@ function toast(msg) {
 
 function setStatus(on) {
   $('statusDot').classList.toggle('on', on);
-  $('statusText').textContent = on ? t('status.active') : t('status.stopped');
+  $('statusText').textContent = state.muted
+    ? t('status.muted')
+    : on ? t('status.active') : t('status.stopped');
   const btn = $('toggleBtn');
   btn.textContent = on ? t('btn.stop') : t('btn.start');
   btn.classList.toggle('stop', on);
@@ -68,6 +70,8 @@ function saveSettingsNow() {
   meta.params.nsEnabled = !!params.nsEnabled;
   meta.params.nsStrength = params.nsStrength;
   meta.params.pitchQuality = params.pitchQuality === 1 ? 1 : 0;
+  meta.params.sbVolume = params.sbVolume;
+  meta.params.sbDuck = !!params.sbDuck;
   localStorage.setItem('vt_settings', JSON.stringify(meta));
 }
 
@@ -98,6 +102,10 @@ function loadSettings() {
     if (saved.params.pitchQuality === 0 || saved.params.pitchQuality === 1) {
       params.pitchQuality = saved.params.pitchQuality;
     }
+    if (typeof saved.params.sbVolume === 'number' && isFinite(saved.params.sbVolume)) {
+      params.sbVolume = Math.min(100, Math.max(0, saved.params.sbVolume));
+    }
+    if (typeof saved.params.sbDuck === 'boolean') params.sbDuck = saved.params.sbDuck;
   }
   if (typeof saved.chunkMs === 'number') rvc.chunkMs = saved.chunkMs;
   return saved;
@@ -330,6 +338,8 @@ function resetAllSettings() {
   params.nsEnabled = true;
   params.nsStrength = 60;
   params.pitchQuality = 0;
+  params.sbVolume = 100;
+  params.sbDuck = true;
 
   renderSliders('voiceSliders', 'voice');
   renderSliders('fxSliders', 'fx');
@@ -338,6 +348,11 @@ function resetAllSettings() {
   $('s_nsStrength').value = '60';
   $('v_nsStrength').textContent = '60 %';
   $('qualityChk').checked = false;
+  if ($('s_sbVol')) {
+    $('s_sbVol').value = '100';
+    $('v_sbVol').textContent = '100 %';
+    $('sbDuck').checked = true;
+  }
 
   state.customIr = null;
   rebuildConvolver();

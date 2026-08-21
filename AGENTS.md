@@ -20,7 +20,7 @@ Depuis un clone frais, un agent IA peut tout faire avec ces commandes :
 ```bash
 bun install                          # dépendances (postinstall gérés via trustedDependencies)
 node node_modules/electron/install.js  # s'assure que le binaire Electron existe (idempotent)
-bun run test:e2e                     # suite E2E complète : doit afficher SUMMARY 21/21
+bun run test:e2e                     # suite E2E complète : doit afficher SUMMARY 23/23
 bun run smoke                        # vérifie worklets + rendu formant + RVC : SMOKE_OK
 bun start                            # lance l'app
 ```
@@ -33,7 +33,7 @@ passer : cherche la régression dans le code (voir « Règles d'or »).
 | Commande | Rôle |
 |---|---|
 | `bun start` | Lance l'app en dev |
-| `bun run test:e2e` | E2E headless (micro factice) — 21 tests, exit code fiable |
+| `bun run test:e2e` | E2E headless (micro factice) — 23 tests, exit code fiable |
 | `bun run smoke` | Smoke rapide : chargement des worklets, rendu offline, statut RVC |
 | `bun run icon` | Régénère `renderer/favicon.ico` + `renderer/icon.png` (zéro dépendance) |
 | `bun run dist:dir` | Build packagé non installable → `release/win-unpacked/` |
@@ -66,6 +66,7 @@ renderer/
   js/ui.js               Sliders générés, presets chips, persistance 'vt_settings', vumètre
   js/rvc.js              Carte RVC (statut, chargement, URL)
   js/wizard.js           Wizard premier lancement (micro, VB-CABLE, voix de départ)
+  js/soundboard.js       Pads audio importés, ducking de la voix, bus micro
   worklets/*.js          DSP temps réel (AudioWorkletProcessor)
   reverb-irs.js          IR procédurales (room/hall/cathedral/plate)
 tests/page-tests.js      Suite E2E exportée en string (exécutée dans le renderer)

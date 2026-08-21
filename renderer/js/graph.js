@@ -47,6 +47,10 @@ function buildGraph() {
     },
   });
 
+  // atténuation de la voix quand un pad du soundboard joue
+  const duckVoice = ctx.createGain();
+  duckVoice.gain.value = 1;
+
   const worklet = new AudioWorkletNode(ctx, 'voice-processor', {
     numberOfInputs: 1,
     numberOfOutputs: 1,
@@ -148,6 +152,12 @@ function buildGraph() {
   const monitorGain = ctx.createGain();
   monitorGain.gain.value = $('monitorChk').checked ? 1 : 0;
 
+  // mute global (hotkey) + bus du soundboard, tous deux avant la sortie
+  const muteGain = ctx.createGain();
+  muteGain.gain.value = state.muted ? 0 : 1;
+  const sbBus = ctx.createGain();
+  sbBus.gain.value = params.sbVolume / 100;
+
   // limiteur final : protège de tout clip quand drive/réverbe/volume s'additionnent
   const limiter = ctx.createDynamicsCompressor();
   limiter.threshold.value = -2;
@@ -164,7 +174,8 @@ function buildGraph() {
   source.connect(nsDry);
   nsDry.connect(nsSum);
   nsSum.connect(voc);
-  voc.connect(worklet);
+  voc.connect(duckVoice);
+  duckVoice.connect(worklet);
   worklet.connect(formant);
   formant.connect(deesser);
   deesser.connect(peak);
@@ -187,10 +198,12 @@ function buildGraph() {
   chorusWet.connect(master);
 
   master.connect(limiter);
-  limiter.connect(monitorGain);
+  sbBus.connect(limiter);
+  limiter.connect(muteGain);
+  muteGain.connect(monitorGain);
   monitorGain.connect(ctx.destination);
 
-  limiter.connect(msDest);
+  muteGain.connect(msDest);
 
   state.worklet = worklet;
   state.formant = formant;
@@ -202,22 +215,26 @@ function buildGraph() {
   state.tap = tap;
   state.player = player;
   state.msDest = msDest;
+  state.duckVoice = duckVoice;
+  state.muteGain = muteGain;
+  state.sbBus = sbBus;
   state.nodes = { peak, low, high, shaper, wet, master, monitorGain, echoDelay, echoWet, chorusWet, conv, limiter };
   connectOutput();
 }
 
 function connectOutput() {
-  const { limiter, player, monitorGain } = state;
-  if (!limiter) return;
-  try { limiter.disconnect(); } catch (e) {}
+  const { muteGain, player } = state;
+  const monitorGain = state.nodes && state.nodes.monitorGain;
+  if (!muteGain || !monitorGain) return;
+  try { muteGain.disconnect(); } catch (e) {}
   try { player.disconnect(); } catch (e) {}
   if (rvc.enabled && rvc.loaded) {
-    limiter.connect(state.tap);
+    muteGain.connect(state.tap);
     player.connect(monitorGain);
     player.connect(state.msDest);
   } else {
-    limiter.connect(monitorGain);
-    limiter.connect(state.msDest);
+    muteGain.connect(monitorGain);
+    muteGain.connect(state.msDest);
   }
 }
 
@@ -242,6 +259,16 @@ async function sendRvcChunk(chunk) {
 function applyParams() {
   if (state.deesser) {
     state.deesser.port.postMessage({ amount: params.deesser });
+  }
+  if (state.muteGain) {
+    const g = state.muteGain.gain;
+    const t = state.ctx ? state.ctx.currentTime : 0;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(state.muted ? 0 : 1, t + 0.04);
+  }
+  if (state.sbBus) {
+    state.sbBus.gain.value = params.sbVolume / 100;
   }
   if (state.voc) {
     state.voc.port.postMessage({

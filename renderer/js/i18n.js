@@ -42,6 +42,22 @@ const I18N_DICT = {
     'wiz.next': 'Suivant',
     'wiz.finish': 'Terminer',
 
+    'status.muted': 'Muet',
+    'card.soundboard': 'Soundboard',
+    'btn.addSounds': 'Ajouter des sons…',
+    'btn.stopAll': 'Tout stopper',
+    'slider.sbVol': 'Volume sons',
+    'tip.sbVol': "Volume des pads du soundboard.",
+    'label.sbDuck': 'Étouffer la voix pendant la lecture',
+    'hint.soundboard':
+      "Les sons passent dans le même bus que ta voix : le micro virtuel (VB-CABLE) et la sortie locale les diffusent aussi.",
+    'toast.sbNeedStart': "Démarre le traitement pour jouer un son.",
+    'toast.sbAdded': 'sons ajoutés :',
+    'toast.sbLoadFail': 'Impossible de charger le son',
+    'settings.hotkeys': 'Raccourcis globaux',
+    'settings.hotkeysList':
+      '<b>Ctrl+Shift+M</b> : couper / rétablir le micro · <b>Ctrl+Shift+1 à 8</b> : voix prédéfinies',
+
     'card.devices': 'Périphériques',
     'card.presets': 'Voix prédéfinies',
     'card.voice': 'Voix & réalisme',
@@ -231,6 +247,22 @@ const I18N_DICT = {
     'wiz.back': 'Back',
     'wiz.next': 'Next',
     'wiz.finish': 'Finish',
+
+    'status.muted': 'Muted',
+    'card.soundboard': 'Soundboard',
+    'btn.addSounds': 'Add sounds…',
+    'btn.stopAll': 'Stop all',
+    'slider.sbVol': 'Sounds volume',
+    'tip.sbVol': 'Volume of the soundboard pads.',
+    'label.sbDuck': 'Duck the voice while playing',
+    'hint.soundboard':
+      'Sounds run through the same bus as your voice: both the virtual mic (VB-CABLE) and local output play them.',
+    'toast.sbNeedStart': 'Start processing to play a sound.',
+    'toast.sbAdded': 'sounds added:',
+    'toast.sbLoadFail': 'Could not load sound',
+    'settings.hotkeys': 'Global shortcuts',
+    'settings.hotkeysList':
+      '<b>Ctrl+Shift+M</b>: mute / unmute · <b>Ctrl+Shift+1 to 8</b>: voice presets',
 
     'card.devices': 'Devices',
     'card.presets': 'Voice presets',

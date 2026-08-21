@@ -13,6 +13,12 @@ contextBridge.exposeInMainWorld('vt', {
   openLogs: () => ipcRenderer.invoke('logs:open'),
   appInfo: () => ipcRenderer.invoke('app:info'),
   openUrl: (url) => ipcRenderer.invoke('app:open', url),
+  sb: {
+    add: () => ipcRenderer.invoke('sb:add'),
+    load: (file) => ipcRenderer.invoke('sb:load', file),
+    remove: (file) => ipcRenderer.invoke('sb:remove', file),
+  },
+  onHotkey: (cb) => ipcRenderer.on('hotkey', (_e, msg) => cb(msg)),
   updater: {
     check: () => ipcRenderer.invoke('updater:check'),
     onUpdate: (cb) => ipcRenderer.on('updater', (_e, payload) => cb(payload)),

@@ -34,7 +34,8 @@ module.exports = `(async () => {
       'rvcLoadBtn','rvcEnable','rvcChunk','rvcUrlName','rvcUrl','rvcAddBtn','outAudio',
       'statusDot','statusText','voiceSliders','fxSliders','openLogsBtn','langSelect',
       'resetBtn','appVersion','ghBtn','sponsorBtn','wizard','wizMic','wizNext','wizBack',
-      'wizSkip','wizCable','wizVoices','qualityChk'];
+      'wizSkip','wizCable','wizVoices','qualityChk','sbPads','sbAdd','sbStopAll',
+      's_sbVol','sbDuck'];
 
   // neutralise l'auto-affichage du wizard (premier lancement) pour la suite
   closeWizard();
@@ -379,6 +380,38 @@ module.exports = `(async () => {
     assert(meta.wizardDone === true, 'wizardDone non persiste');
     clickChip('naturel');
     return 'cable=' + cableTxt.slice(0, 30);
+  });
+
+  await test('hotkeys: handler mute et preset', () => {
+    assert(state.muted === false, 'deja muet');
+    handleHotkey({ type: 'mute' });
+    assert(state.muted === true, 'mute sans effet');
+    assert(document.body.classList.contains('muted'), 'classe body.muted absente');
+    handleHotkey({ type: 'mute' });
+    assert(state.muted === false, 'unmute sans effet');
+    const keys = PRESET_GROUPS.flatMap((g) => g.keys);
+    handleHotkey({ type: 'preset', index: 1 });
+    assert(params.pitch !== 0 || params.formant !== 0, 'preset hotkey non applique');
+    clickChip('naturel');
+    return 'keys=' + keys.length;
+  });
+
+  await test('soundboard: pads et garde demarrage', async () => {
+    const list = sbList();
+    sbSave([{ id: 'e2etest', name: 'E2E Pad', file: 'e2etest.wav' }]);
+    renderPads();
+    const pad = document.querySelector('#sbPads .pad');
+    assert(pad && pad.textContent.indexOf('E2E Pad') >= 0, 'pad non rendu');
+    await playSound({ id: 'e2etest', name: 'E2E Pad', file: 'e2etest.wav' });
+    assert($('toast').classList.contains('show'), 'toast needStart absent');
+    assert(sbActive.size === 0, 'source creee sans ctx');
+    pad.querySelector('.del').click();
+    await sleep(200);
+    const gone = document.querySelector('#sbPads .pad');
+    assert(!gone || gone.textContent.indexOf('E2E Pad') < 0, 'pad non supprime');
+    sbSave(list);
+    renderPads();
+    return 'pads ok';
   });
 
   await test('i18n: bascule FR vers EN puis retour', () => {

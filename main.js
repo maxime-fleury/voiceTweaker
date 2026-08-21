@@ -1,4 +1,12 @@
-const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  session,
+  ipcMain,
+  shell,
+  globalShortcut,
+  dialog,
+} = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -71,6 +79,55 @@ ipcMain.handle('app:open', (_e, url) => {
   if (typeof url === 'string' && url.startsWith('https://')) shell.openExternal(url);
   return { ok: true };
 });
+
+/* ---------- Soundboard ---------- */
+
+function soundsDir() {
+  const dir = path.join(app.getPath('userData'), 'sounds');
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+ipcMain.handle('sb:add', async () => {
+  const win = BrowserWindow.getAllWindows()[0];
+  const res = await dialog.showOpenDialog(win, {
+    title: 'Ajouter des sons',
+    filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac'] }],
+    properties: ['openFile', 'multiSelections'],
+  });
+  if (res.canceled) return { ok: true, added: [] };
+  const dir = soundsDir();
+  const added = [];
+  for (const src of res.filePaths) {
+    try {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const file = id + path.extname(src).toLowerCase();
+      await fs.promises.copyFile(src, path.join(dir, file));
+      added.push({ id, name: path.basename(src, path.extname(src)).slice(0, 24), file });
+    } catch (e) {}
+  }
+  return { ok: true, added };
+});
+
+ipcMain.handle('sb:load', async (_e, file) => {
+  if (typeof file !== 'string' || path.basename(file) !== file || !/^[a-z0-9]+\.[a-z0-9]+$/i.test(file)) {
+    return { ok: false, error: 'nom invalide' };
+  }
+  try {
+    const buf = await fs.promises.readFile(path.join(soundsDir(), file));
+    return { ok: true, data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  }
+});
+
+ipcMain.handle('sb:remove', async (_e, file) => {
+  if (typeof file !== 'string' || path.basename(file) !== file || !/^[a-z0-9]+\.[a-z0-9]+$/i.test(file)) {
+    return { ok: false, error: 'nom invalide' };
+  }
+  try { await fs.promises.unlink(path.join(soundsDir(), file)); } catch (e) {}
+  return { ok: true };
+});
 ipcMain.handle('updater:check', () => {
   if (!app.isPackaged || SMOKE || E2E) return { ok: false, error: 'indisponible en dev' };
   autoUpdater.checkForUpdates().catch((err) => logLine('[updater] check failed: ' + err.message));
@@ -93,6 +150,29 @@ function setupAutoUpdater(win) {
   autoUpdater.on('error', (err) => logLine('[updater] error: ' + err.message));
   autoUpdater.checkForUpdates().catch((err) => logLine('[updater] check failed: ' + err.message));
 }
+
+/* ---------- Hotkeys globales ---------- */
+
+function setupHotkeys(win) {
+  if (SMOKE || E2E) return;
+  const send = (msg) => {
+    try { win.webContents.send('hotkey', msg); } catch (e) {}
+  };
+  const reg = (accel, fn) => {
+    try {
+      globalShortcut.register(accel, fn);
+      logLine('[hotkeys] ' + accel);
+    } catch (e) {}
+  };
+  reg('CommandOrControl+Shift+M', () => send({ type: 'mute' }));
+  for (let i = 1; i <= 8; i++) {
+    reg('CommandOrControl+Shift+' + i, () => send({ type: 'preset', index: i - 1 }));
+  }
+}
+
+app.on('will-quit', () => {
+  try { globalShortcut.unregisterAll(); } catch (e) {}
+});
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -138,6 +218,7 @@ app.whenReady().then(() => {
 
   const win = createWindow();
   setupAutoUpdater(win);
+  setupHotkeys(win);
 
   if (SMOKE) {
     win.webContents.on('did-finish-load', async () => {

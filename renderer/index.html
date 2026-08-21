@@ -59,6 +59,27 @@
           <input type="file" id="irFile" accept=".wav,.ogg,.mp3,.flac" hidden />
         </div>
       </section>
+
+      <section class="card wide">
+        <h2 data-i18n="card.soundboard">Soundboard</h2>
+        <div class="pads" id="sbPads"></div>
+        <div class="btn-row">
+          <button id="sbAdd" class="small" data-i18n="btn.addSounds">Ajouter des sons…</button>
+          <button id="sbStopAll" class="small ghost" data-i18n="btn.stopAll">Tout stopper</button>
+        </div>
+        <div class="row">
+          <span class="lbl" data-i18n="slider.sbVol">Volume sons</span>
+          <input type="range" id="s_sbVol" min="0" max="100" step="1" value="100" />
+          <span class="val" id="v_sbVol">100 %</span>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="sbDuck" checked />
+          <span data-i18n="label.sbDuck">Étouffer la voix pendant la lecture</span>
+        </label>
+        <p class="hint" data-i18n-html="hint.soundboard">
+          Les sons passent dans le même bus que ta voix : le micro virtuel (VB-CABLE) et la sortie locale les diffusent aussi.
+        </p>
+      </section>
     </section>
 
     <!-- ==================== AUDIO ==================== -->
@@ -164,6 +185,10 @@
           VoiceTweaker <span id="appVersion"></span> —
           <span data-i18n="settings.tagline">changeur de voix temps réel, 100 % local et open source.</span>
         </p>
+        <h2 data-i18n="settings.hotkeys">Raccourcis globaux</h2>
+        <p class="about" data-i18n-html="settings.hotkeysList">
+          Ctrl+Shift+M : couper / rétablir le micro · Ctrl+Shift+1 à 8 : voix prédéfinies
+        </p>
         <div class="btn-row">
           <button id="ghBtn" class="small ghost">GitHub</button>
           <button id="sponsorBtn" class="small heart" data-i18n="btn.sponsor">Soutenir le projet</button>
@@ -221,6 +246,7 @@
   <script src="js/ui.js"></script>
   <script src="js/rvc.js"></script>
   <script src="js/wizard.js"></script>
+  <script src="js/soundboard.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,5 +1,29 @@
 'use strict';
 
+function setMuted(m) {
+  state.muted = m;
+  applyParams();
+  document.body.classList.toggle('muted', m);
+  $('statusText').textContent = m ? t('status.muted') : state.running ? t('status.active') : t('status.stopped');
+}
+
+function handleHotkey(msg) {
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.type === 'mute') {
+    setMuted(!state.muted);
+    return;
+  }
+  if (msg.type === 'preset' && typeof msg.index === 'number') {
+    const keys = PRESET_GROUPS.flatMap((g) => g.keys);
+    const key = keys[msg.index];
+    if (key) {
+      applyPreset(key);
+      const p = ALL_PRESETS[key];
+      toast(p.labelKey ? t(p.labelKey) : p.label);
+    }
+  }
+}
+
 async function start() {
   try {
     const micId = $('micSelect').value;
@@ -58,7 +82,7 @@ async function start() {
     saveSettingsNow();
     listDevices();
   } catch (err) {
-    console.error(err);
+    console.error(err && err.stack ? err.stack : err);
     toast(
       err.name === 'NotAllowedError'
         ? t('toast.micDenied')
@@ -167,6 +191,10 @@ function init() {
   });
 
   initWizard(saved);
+
+  initSoundboard();
+
+  window.vt.onHotkey(handleHotkey);
 
   $('langSelect').addEventListener('change', (e) => setLang(e.target.value));
 

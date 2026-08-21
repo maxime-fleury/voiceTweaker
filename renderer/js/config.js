@@ -68,6 +68,10 @@ params.nsStrength = 60;
 // Pitch algorithm: 0 = granular (low latency), 1 = phase-locked vocoder.
 params.pitchQuality = 0;
 
+// Soundboard.
+params.sbVolume = 100;
+params.sbDuck = true;
+
 const DEFAULT_PARAMS = Object.assign({}, params);
 
 const SLIDER_IDS = SLIDERS.filter((s) => s.type !== 'select').map((s) => s.id);
@@ -81,11 +85,13 @@ const state = {
   stream: null,
   worklet: null,
   formant: null,
+  voc: null,
   tap: null,
   player: null,
   nodes: {},
   level: 0,
   customIr: null,
+  muted: false,
 };
 
 const rvc = {
