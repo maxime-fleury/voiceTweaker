@@ -102,3 +102,6 @@ bun run smoke     # vérification rapide des worklets + rendu offline
 ## Licence
 
 [MIT](LICENSE) — Copyright (c) 2026 maxime-fleury
+
+## AI usage
+This project may be used, modified, and incorporated into AI systems, including for training, inference, evaluation, research, and commercial purposes, subject to the terms of the MIT License.
