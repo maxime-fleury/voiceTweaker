@@ -84,7 +84,14 @@ contre `startRendering()` — bug déjà corrigé une fois).
 - `pitch-vocoder` : `{enabled(0|1), pitch, vibrDepth, vibrRate, humanize}` — mode « Qualité max » ; quand actif, voice-processor reçoit `bypassPitch:1`
 - `formant-processor` : `{alpha}` (alpha = 2^(formant*4/1200))
 - `stream-tap` → chunks Float32Array vers RVC ; `chunk-player` accepte `{audio: Float32Array}` (transférable)
-- RVC : `convert(chunk, transpose)` ; quand RVC est actif, voice-processor reçoit `bypassPitch:1` et le vocoder se coupe — le slider Pitch devient la transposition du modèle
+- RVC : `convert(chunk, transpose)` (main.js -> rvc-engine.js, ONNX sur onnxruntime-node).
+  Encoder ContentVec (`models/hubert/hubert.onnx`, `wav[1,T]` 16 kHz brut ->
+  `features[1,T/320,768]`) sur DirectML GPU ; générateur (`model.onnx` par voix,
+  6 entrées dont `rnd[1,192,T]`) sur **CPU** (ses `Reshape` dynamiques cassent
+  le EP DirectML). Sortie remappée à la durée d'entrée. Quand RVC est actif,
+  voice-processor reçoit `bypassPitch:1` et le vocoder se coupe — le slider Pitch
+  devient la transposition du modèle. Voir `tools/rvc-export/README.md` pour
+  convertir un `.pth` (patch `window_size` + `reverse` tuple requis).
 
 ## Règles d'or
 

@@ -91,18 +91,17 @@ class RvcEngine {
     this.hubertSess = null;
     this.genSess = null;
     this.voiceId = null;
-    this.ep = null;
+    this.encoderEp = null;
+    this.genEp = null;
   }
 
-  async createSession(p) {
-    // Windows : tente DirectML (GPU) puis retombe sur CPU
-    const eps = process.platform === 'win32' ? [['dml'], ['cpu']] : [['cpu']];
+  async createSession(p, eps) {
+    if (!eps) eps = process.platform === 'win32' ? [['dml'], ['cpu']] : [['cpu']];
     let lastErr = null;
     for (const ep of eps) {
       try {
         const sess = await OT.InferenceSession.create(p, { executionProviders: ep });
-        this.ep = ep[0];
-        return sess;
+        return { sess, ep: ep[0] };
       } catch (e) {
         lastErr = e;
       }
@@ -125,8 +124,8 @@ class RvcEngine {
       voices,
       loaded: this.voiceId,
       modelsRoot: this.root,
-      ep: this.ep,
-      gpu: this.ep === 'dml',
+      ep: this.genEp,
+      gpu: this.genEp === 'dml',
     };
   }
 
@@ -135,7 +134,9 @@ class RvcEngine {
     if (!this.hubertSess) {
       const hp = path.join(this.root, 'hubert', 'hubert.onnx');
       if (!fs.existsSync(hp)) throw new Error('models/hubert/hubert.onnx introuvable');
-      this.hubertSess = await this.createSession(hp);
+      const r = await this.createSession(hp);
+      this.hubertSess = r.sess;
+      this.encoderEp = r.ep;
     }
     const vp = path.join(this.root, voiceId, 'model.onnx');
     if (!fs.existsSync(vp)) throw new Error(`Modèle introuvable : ${vp}`);
@@ -143,9 +144,13 @@ class RvcEngine {
       if (this.genSess) await this.genSess.release();
       this.genSess = null;
     }
-    this.genSess = await this.createSession(vp);
+    // Le générateur utilise des Reshape dynamiques incompatibles avec le EP DirectML :
+    // on le force en CPU, l'encodeur reste sur DirectML (GPU) pour la vitesse.
+    const r = await this.createSession(vp, [['cpu']]);
+    this.genSess = r.sess;
+    this.genEp = r.ep;
     this.voiceId = voiceId;
-    return { ok: true, ep: this.ep, inputs: this.genSess.inputNames, outputs: this.genSess.outputNames };
+    return { ok: true, ep: this.genEp, inputs: this.genSess.inputNames, outputs: this.genSess.outputNames };
   }
 
   async removeModel(voiceId) {
@@ -198,43 +203,41 @@ class RvcEngine {
     const pitchf = Float32Array.from(f0);
     const phone = feats instanceof Float32Array ? feats : Float32Array.from(feats);
 
-    const variants = [
-      { phone: [1, T, D], pitch: [1, T], pitchf: [1, T], pl: [1], ds: [1] },
-      { phone: [T, D], pitch: [T], pitchf: [T], pl: [1], ds: [1] },
-    ];
+    // Bruit aléatoire requis par le générateur RVC (forme [1, 192, T])
+    const rnd = new Float32Array(192 * T);
+    for (let i = 0; i < rnd.length; i++) rnd[i] = Math.random() * 2 - 1;
 
-    let lastErr = null;
-    for (const v of variants) {
-      const tensors = {
-        phone: new OT.Tensor('float32', phone, v.phone),
-        phone_lengths: new OT.Tensor('int64', BigInt64Array.from([BigInt(T)]), v.pl),
-        pitch: new OT.Tensor('int64', BigInt64Array.from(coarse.map(BigInt)), v.pitch),
-        pitchf: new OT.Tensor('float32', pitchf, v.pitchf),
-        ds: new OT.Tensor('int64', BigInt64Array.from([BigInt(0)]), v.ds),
-      };
-      const feeds = {};
-      for (const name of this.genSess.inputNames) {
-        if (/phone_len/i.test(name)) feeds[name] = tensors.phone_lengths;
-        else if (/pitchf|pitch_f/i.test(name)) feeds[name] = tensors.pitchf;
-        else if (/pitch/i.test(name)) feeds[name] = tensors.pitch;
-        else if (/^ds$|speaker|sid/i.test(name)) feeds[name] = tensors.ds;
-        else if (/phone|token|feature|hidden/i.test(name)) feeds[name] = tensors.phone;
-      }
-      try {
-        const gOut = await this.genSess.run(feeds);
-        const a = gOut[this.genSess.outputNames[0]];
-        let audio = a.data;
-        const adims = a.dims;
-        if (adims.length > 1) {
-          const lastDim = adims[adims.length - 1];
-          audio = audio.slice(audio.length - lastDim);
-        }
-        return audio instanceof Float32Array ? audio : Float32Array.from(audio);
-      } catch (err) {
-        lastErr = err;
-      }
+    const tensors = {
+      phone: new OT.Tensor('float32', phone, [1, T, D]),
+      phone_lengths: new OT.Tensor('int64', BigInt64Array.from([BigInt(T)]), [1]),
+      pitch: new OT.Tensor('int64', BigInt64Array.from(coarse.map(BigInt)), [1, T]),
+      pitchf: new OT.Tensor('float32', pitchf, [1, T]),
+      ds: new OT.Tensor('int64', BigInt64Array.from([BigInt(0)]), [1]),
+      rnd: new OT.Tensor('float32', rnd, [1, 192, T]),
+    };
+
+    const feeds = {};
+    for (const name of this.genSess.inputNames) {
+      if (/phone_len/i.test(name)) feeds[name] = tensors.phone_lengths;
+      else if (/rnd|noise|rand/i.test(name)) feeds[name] = tensors.rnd;
+      else if (/pitchf|pitch_f/i.test(name)) feeds[name] = tensors.pitchf;
+      else if (/pitch/i.test(name)) feeds[name] = tensors.pitch;
+      else if (/^ds$|speaker|sid/i.test(name)) feeds[name] = tensors.ds;
+      else if (/phone|token|feature|hidden/i.test(name)) feeds[name] = tensors.phone;
     }
-    throw new Error('Inférence RVC échouée : ' + (lastErr && lastErr.message));
+
+    const gOut = await this.genSess.run(feeds);
+    const a = gOut[this.genSess.outputNames[0]];
+    let audio = a.data;
+    const adims = a.dims;
+    if (adims.length > 1) {
+      const lastDim = adims[adims.length - 1];
+      audio = audio.slice(audio.length - lastDim);
+    }
+    const out = audio instanceof Float32Array ? audio : Float32Array.from(audio);
+    // Le générateur émet à son débit interne (~20 kHz) : on remappe à la
+    // durée d'entrée pour un streaming à 48 kHz sans décalage de hauteur.
+    return resampleLinear(out, out.length, f32.length);
   }
 
   async addUrl(name, url, depth = 0) {
