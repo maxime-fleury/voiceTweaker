@@ -13,7 +13,7 @@ const SLIDERS = [
     fmt: (v) => v.toFixed(1), tip: () => t('tip.timbre') },
   { id: 'transients', group: 'voice', label: () => t('slider.transients'), min: 0, max: 100, step: 1, value: 55,
     fmt: pctFmt, tip: () => t('tip.transients') },
-  { id: 'grain', group: 'voice', label: () => t('slider.grain'), min: 40, max: 160, step: 1, value: 85,
+  { id: 'grain', group: 'voice', label: () => t('slider.grain'), min: 40, max: 160, step: 1, value: 40,
     fmt: (v) => Math.round(v) + ' ms', tip: () => t('tip.grain') },
   { id: 'gate', group: 'voice', label: () => t('slider.gate'), min: -100, max: -20, step: 1, value: -90,
     fmt: (v) => Math.round(v) + ' dB', tip: () => t('tip.gate') },

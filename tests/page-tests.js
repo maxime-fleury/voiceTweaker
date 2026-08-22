@@ -61,10 +61,10 @@ module.exports = `(async () => {
 
   await test('preset: feminin', () => {
     clickChip('feminin');
-    assert(Math.abs(params.pitch - 3.4) < 0.01, 'pitch=' + params.pitch);
-    assert(Math.abs(params.formant - 38) < 0.5, 'formant=' + params.formant);
-    assert($('v_formant').textContent === '38 %', 'label=' + $('v_formant').textContent);
-    assert($('s_pitch').value === '3.4', 's_pitch=' + $('s_pitch').value);
+    assert(Math.abs(params.pitch - 9) < 0.01, 'pitch=' + params.pitch);
+    assert(Math.abs(params.formant - 42) < 0.5, 'formant=' + params.formant);
+    assert($('v_formant').textContent === '42 %', 'label=' + $('v_formant').textContent);
+    assert($('s_pitch').value === '9', 's_pitch=' + $('s_pitch').value);
     return 'ok';
   });
 
@@ -373,7 +373,7 @@ module.exports = `(async () => {
     $('wizNext').click();
     assert(document.getElementById('wp3').classList.contains('active'), 'etape 3 inactive');
     document.querySelector('#wizVoices .chip[data-key="feminin"]').click();
-    assert(Math.abs(params.pitch - 3.4) < 0.01, 'preset wizard non applique');
+    assert(Math.abs(params.pitch - 9) < 0.01, 'preset wizard non applique');
     $('wizNext').click();
     assert(ov.classList.contains('hidden'), 'wizard non ferme');
     const meta = JSON.parse(localStorage.getItem('vt_settings'));
