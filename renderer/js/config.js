@@ -48,7 +48,7 @@ const SLIDERS = [
     fmt: (v) => Math.round(v) + ' ms', tip: () => t('tip.echoTime') },
   { id: 'chorus', group: 'fx', label: () => t('slider.chorus'), min: 0, max: 100, step: 1, value: 0,
     fmt: pctFmt, tip: () => t('tip.chorus') },
-  { id: 'deesser', group: 'fx', label: () => t('slider.deesser'), min: 0, max: 100, step: 1, value: 30,
+  { id: 'deesser', group: 'fx', label: () => t('slider.deesser'), min: 0, max: 100, step: 1, value: 12,
     fmt: pctFmt, tip: () => t('tip.deesser') },
   { id: 'volume', group: 'fx', label: () => t('slider.volume'), min: 0, max: 150, step: 1, value: 100,
     fmt: pctFmt, tip: () => t('tip.volume') },
@@ -61,9 +61,10 @@ for (const s of SLIDERS) params[s.id] = s.value;
 params.low = null;
 params.high = null;
 
-// Noise suppression (RNNoise) — ON by default, moderate strength.
+// Noise suppression (RNNoise) — ON by default, light (la force élevée donne
+// un timbre « téléphone/robotique »). Le preset « naturel » le désactive.
 params.nsEnabled = true;
-params.nsStrength = 60;
+params.nsStrength = 30;
 
 // Pitch algorithm: 0 = granular (low latency), 1 = phase-locked vocoder.
 params.pitchQuality = 0;

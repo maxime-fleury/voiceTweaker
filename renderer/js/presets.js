@@ -1,7 +1,7 @@
 'use strict';
 
 const PRESETS = {
-  naturel:       { labelKey: 'preset.naturel',        p: { transients: 55 } },
+  naturel:       { labelKey: 'preset.naturel',        p: { transients: 55, nsEnabled: false } },
   feminin:       { labelKey: 'preset.feminin',        p: { pitch: 3.4, formant: 38, timbre: 2, grain: 70, gate: -70, reverb: 6, humanize: 35, breath: 15, transients: 65 } },
   femininDoux:   { labelKey: 'preset.femininDoux',    p: { pitch: 2.8, formant: 30, timbre: 1.5, grain: 80, gate: -70, reverb: 10, humanize: 45, breath: 25, vibrDepth: 8, vibrRate: 5.2, transients: 65 } },
   masculin:      { labelKey: 'preset.masculin',       p: { pitch: -3.2, formant: -32, timbre: -2, grain: 95, gate: -70, reverb: 4, humanize: 30, transients: 65 } },

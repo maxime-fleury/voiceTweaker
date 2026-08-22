@@ -34,10 +34,13 @@ function buildGraph() {
     outputChannelCount: [1],
     processorOptions: { maxChannels: 1, wasmBinary: state.nsWasmBytes },
   });
-  const nsWet = ctx.createGain();
-  const nsDry = ctx.createGain();
-  nsWet.gain.value = params.nsEnabled ? params.nsStrength / 100 : 0;
-  nsDry.gain.value = params.nsEnabled ? 1 - params.nsStrength / 100 : 1;
+const nsWet = ctx.createGain();
+const nsDry = ctx.createGain();
+{
+  const s = params.nsEnabled ? Math.min(0.9, params.nsStrength / 100) : 0;
+  nsWet.gain.value = s;
+  nsDry.gain.value = 1 - s;
+}
   const nsSum = ctx.createGain();
 
   // Vocoder « Qualité max » : toujours en chaîne, bypass interne si off.
@@ -123,12 +126,12 @@ function buildGraph() {
   const shaper = ctx.createWaveShaper();
   shaper.oversample = '2x';
 
-  const comp = ctx.createDynamicsCompressor();
-  comp.threshold.value = -24;
-  comp.knee.value = 12;
-  comp.ratio.value = 3;
-  comp.attack.value = 0.005;
-  comp.release.value = 0.15;
+const comp = ctx.createDynamicsCompressor();
+comp.threshold.value = -18;
+comp.knee.value = 20;
+comp.ratio.value = 2;
+comp.attack.value = 0.01;
+comp.release.value = 0.25;
 
   const conv = ctx.createConvolver();
   conv.buffer = state.customIr || generateIR(ctx, params.irType);
@@ -327,9 +330,9 @@ function applyParams() {
   }
   if (state.nsWet) {
     const on = !!params.nsEnabled;
-    const s = params.nsStrength / 100;
+    const s = on ? Math.min(0.9, params.nsStrength / 100) : 0;
     const t = state.ctx ? state.ctx.currentTime : 0;
-    for (const [g, target] of [[state.nsWet, on ? s : 0], [state.nsDry, on ? 1 - s : 1]]) {
+    for (const [g, target] of [[state.nsWet, s], [state.nsDry, 1 - s]]) {
       g.gain.cancelScheduledValues(t);
       g.gain.setValueAtTime(g.gain.value, t);
       g.gain.linearRampToValueAtTime(target, t + 0.05);
